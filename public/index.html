@@ -4,275 +4,263 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Rael Match Arena</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js'></script>
 <script src='//monetag.com/sdk/rewarded.js' data-zone='3371302'></script>
 <script src='//monetag.com/sdk/interstitial.js' data-zone='3371302'></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a1929;color:#fff;font-family:-apple-system,Arial;text-align:center;padding:15px}
+body{background:#0a1a2a;color:#fff;font-family:-apple-system,Arial;overflow:hidden}
+.topbar{position:fixed;top:0;left:0;right:0;height:50px;background:#132032;display:flex;align-items:center;justify-content:space-between;padding:0 15px;z-index:10;border-bottom:2px solid #1a2f45}
+.topbar.left{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:bold}
+.topbar.right{font-size:12px;color:#ffd700}
+.container{padding:60px 15px 70px 15px;height:100vh;overflow-y:auto}
 .card{background:#1a2f45;border-radius:20px;padding:15px;margin:10px auto;max-width:400px}
-.stats{display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px}
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:300px;margin:15px auto}
-.tile{aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:transform 0.15s}
+.goal{font-size:13px;margin:8px 0;color:#ffd700;display:flex;align-items:center;justify-content:center;gap:5px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:280px;margin:15px auto}
+.tile{aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:transform 0.15s}
 .tile:active{transform:scale(0.9)}
-.btn{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(90deg,#25a25a,#1e8e4e);color:white;font-size:16px;font-weight:bold;margin:8px 0}
-.btn-stars{background:linear-gradient(90deg,#ffd700,#ff6b00);color:#000}
-.moves{font-size:18px;margin:10px}
-.stars{display:flex;justify-content:center;gap:5px;margin:10px 0;font-size:24px}
+.tile.selected{border:3px solid #ffd700;transform:scale(1.05)}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;height:60px;background:#132032;display:flex;justify-content:space-around;align-items:center;border-top:2px solid #1a2f45}
+.navbtn{flex:1;text-align:center;font-size:11px;color:#aaa;cursor:pointer;padding:5px}
+.navbtn.active{color:#25a25a;font-weight:bold}
+.btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(90deg,#25a25a,#1a7a45);color:white;font-size:15px;font-weight:bold;margin:6px 0;cursor:pointer}
+.btn:active{transform:scale(0.97)}
+.btn-stars{background:linear-gradient(90deg,#ffd700,#ff8c00);color:#000}
+.stats{display:flex;justify-content:space-between;font-size:13px;margin:8px 0}
+.stars{font-size:22px;text-align:center;margin:5px}
+h3{margin:10px 0;text-align:center}
 </style>
 </head>
 <body>
-<h1>Rael Match Arena</h1>
 
-<div class="card">
-  <div class="stats">
-    <span>Level: <b id="level">1</b></span>
-    <span>Coins: <b id="coins">0</b></span>
-    <span>Revives: <b id="revives">3</b></span>
+<div class="topbar">
+  <div class="left">
+    <span id="avatar">👤</span>
+    <span id="username">Player</span>
   </div>
+  <div class="right">Top: <b id="topscore">0</b> coins</div>
+</div>
 
-  <div class="moves">Moves: <b id="moves">15</b> | Score: <b id="score">0</b> | Time: <b id="time">0s</b></div>
+<div class="container" id="mainview">
+  <div class="card">
+    <div class="stats">
+      <span>Level: <b id="level">1</b></span>
+      <span>Coins: <b id="coins">0</b></span>
+      <span>Moves: <b id="moves">20</b></span>
+    </div>
 
-  <div class="stars" id="starsDisplay">⭐</div>
+    <div class="goal" id="goaltext">
+      🎯 Goal: Collect 40 💎 Diamonds + 40 💜 Hearts
+    </div>
 
-  <div class="grid" id="grid"></div>
+    <div class="stats">
+      <span>💎: <b id="collected_diamond">0</b>/40</span>
+      <span>💜: <b id="collected_heart">0</b>/40</span>
+      <span>Time: <b id="time">0s</b></span>
+    </div>
 
-  <button class="btn" onclick="skillRevive()">+5 Moves - Watch Ad</button>
-  <button class="btn btn-stars" onclick="buyNoAds()">Remove Ads 250⭐</button>
+    <div class="stars" id="stars">⭐</div>
+    <div class="grid" id="grid"></div>
+
+    <button class="btn" onclick="shuffleBoard()">🔄 Shuffle Board - Watch Ad</button>
+    <button class="btn" onclick="shareScore()">📤 Share Score</button>
+    <button class="btn btn-stars" onclick="openStore()">🛍 Store 250⭐</button>
+  </div>
+</div>
+
+<div class="bottomnav">
+  <div class="navbtn active" onclick="showView('mainview', this)">🎮 Play</div>
+  <div class="navbtn" onclick="showView('friendsview', this)">👥 Friends</div>
+  <div class="navbtn" onclick="showView('leaderboardview', this)">🏆 Top</div>
+  <div class="navbtn" onclick="showView('storeview', this)">🛍 Store</div>
+</div>
+
+<div class="container" id="friendsview" style="display:none">
+  <div class="card">
+    <h3>Find Friends / Duel</h3>
+    <p style="font-size:13px;margin:10px 0;color:#aaa">Share link or use /duel @username in Telegram chat</p>
+    <button class="btn" onclick="shareDuel()">⚔️ Invite Friend to Duel</button>
+  </div>
+</div>
+
+<div class="container" id="leaderboardview" style="display:none">
+  <div class="card">
+    <h3>Leaderboard</h3>
+    <div id="leaderboard" style="font-size:13px;text-align:left;margin-top:10px">Loading local scores...</div>
+  </div>
+</div>
+
+<div class="container" id="storeview" style="display:none">
+  <div class="card">
+    <h3>Store</h3>
+    <button class="btn btn-stars" onclick="buySkin('dark',250)">🌙 Dark Theme 250⭐</button>
+    <button class="btn btn-stars" onclick="buySkin('neon',400)">⚡ Neon Skin 400⭐</button>
+    <button class="btn btn-stars" onclick="buyNoAds()">🚫 Remove Ads 250⭐</button>
+  </div>
 </div>
 
 <script>
 const tg = Telegram.WebApp;
 tg.expand();
 
-const emojis = ['💎','🔷','🔶','💚','💜'];
-let board = [];
-let selected = null;
-let moves = 15;
-let score = 0;
-let coins = 0;
-let level = 1;
-let revives = 3;
-let gamesPlayed = 0;
-let hasPremium = false;
-let startTime = 0;
-let timer = null;
-let pendingMultiplier = 1; // for double points ad
+const emojis = [
+  {emoji:'💎',name:'diamond',goal:40},
+  {emoji:'💜',name:'heart',goal:40},
+  {emoji:'🟧',name:'orange',goal:0},
+  {emoji:'🟩',name:'green',goal:0},
+  {emoji:'🟦',name:'blue',goal:0}
+];
 
-// INIT BOARD
-function initBoard() {
-  board = [];
-  for(let i=0; i<25; i++) {
-    board.push(emojis[Math.floor(Math.random()*5)]);
-  }
-  // remove auto-matches
-  for(let i=0; i<25; i++) {
-    while(checkMatchAt(i)) {
-      board[i] = emojis[Math.floor(Math.random()*5)];
-    }
-  }
-  moves = 15;
-  score = 0;
-  startTime = Date.now();
-  clearInterval(timer);
-  timer = setInterval(updateTime, 1000);
-  render();
+let board = [], collected = {diamond:0,heart:0}, moves=20, level=1, coins=0, startTime=0, timer=null, shuffles=0, hasPremium=false, selected=null;
+
+// Init profile from Telegram
+const user = tg.initDataUnsafe.user;
+if(user){
+  document.getElementById('username').textContent = user.first_name;
+  document.getElementById('avatar').textContent = user.first_name[0].toUpperCase();
 }
 
-function updateTime() {
-  const elapsed = Math.floor((Date.now() - startTime)/1000);
-  document.getElementById('time').textContent = elapsed + 's';
+function initLevel(){
+  board=[]; collected={diamond:0,heart:0}; moves=20; shuffles=0; selected=null;
+  for(let i=0;i<25;i++) board.push(emojis[Math.floor(Math.random()*5)]);
+  removeAutoMatches();
+  startTime=Date.now(); clearInterval(timer);
+  timer=setInterval(()=>document.getElementById('time').textContent=Math.floor((Date.now()-startTime)/1000)+'s',1000);
+  render(); updateGoal();
 }
 
-function render() {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  board.forEach((emoji, idx) => {
-    const tile = document.createElement('div');
-    tile.className = 'tile';
-    tile.textContent = emoji;
-    tile.style.background = selected === idx? '#25a25a' : '#0f2742';
-    tile.onclick = () => clickTile(idx);
-    grid.appendChild(tile);
+function removeAutoMatches(){
+  for(let i=0;i<25;i++){
+    while(checkMatchAt(i)) board[i]=emojis[Math.floor(Math.random()*5)];
+  }
+}
+
+function render(){
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  board.forEach((tile,idx)=>{
+    const div=document.createElement('div');
+    div.className='tile'; div.textContent=tile.emoji;
+    div.style.background='#0f2135';
+    div.onclick=()=>clickTile(idx);
+    grid.appendChild(div);
   });
   updateUI();
 }
 
-function clickTile(idx) {
-  if(selected === null) {
-    selected = idx;
-    render();
+function clickTile(idx){
+  if(selected===null){
+    selected=idx;
+    document.querySelectorAll('.tile')[idx].classList.add('selected');
   } else {
-    if(isAdjacent(selected, idx)) {
-      swap(selected, idx);
-      if(!hasMatch()) {
-        swap(selected, idx);
+    document.querySelectorAll('.tile')[selected].classList.remove('selected');
+    if(isAdj(selected,idx)){
+      [board[selected],board[idx]]=[board[idx],board[selected]];
+      if(!hasMatch()){
+        [board[selected],board[idx]]=[board[idx],board[selected]];
         tg.showAlert('No match!');
       } else {
-        moves--;
-        processMatches();
+        moves--; processMatches();
       }
     }
-    selected = null;
-    render();
-
-    if(moves <= 0) endGame();
+    selected=null; render();
+    if(moves<=0) checkNoMoves();
+    if(collected.diamond>=40 && collected.heart>=40) finishLevel();
   }
 }
 
-function isAdjacent(a,b) {
-  const diff = Math.abs(a-b);
-  return (diff === 1 && Math.floor(a/5) === Math.floor(b/5)) || diff === 5;
-}
+function isAdj(a,b){const d=Math.abs(a-b);return (d===1&&Math.floor(a/5)===Math.floor(b/5))||d===5;}
+function hasMatch(){for(let i=0;i<25;i++)if(checkMatchAt(i))return true;return false;}
+function checkMatchAt(i){const e=board[i].emoji;const x=i%5,y=Math.floor(i/5);if(x<3&&board[i+1].emoji===e&&board[i+2].emoji===e)return true;if(y<3&&board[i+5].emoji===e&&board[i+10].emoji===e)return true;return false;}
 
-function swap(a,b) {
-  [board[a], board[b]] = [board[b], board[a]];
-}
-
-function hasMatch() {
-  for(let i=0; i<25; i++) if(checkMatchAt(i)) return true;
-  return false;
-}
-
-function checkMatchAt(i) {
-  const e = board[i];
-  const x = i % 5, y = Math.floor(i/5);
-  if(x<3 && board[i+1]===e && board[i+2]===e) return true;
-  if(y<3 && board[i+5]===e && board[i+10]===e) return true;
-  return false;
-}
-
-function processMatches() {
-  let matched = false;
-  for(let i=0; i<25; i++) {
-    if(checkMatchAt(i)) {
-      score += 10;
-      matched = true;
-      board[i] = emojis[Math.floor(Math.random()*5)];
+function processMatches(){
+  let m=false;
+  for(let i=0;i<25;i++){
+    if(checkMatchAt(i)){
+      if(board[i].name==='diamond')collected.diamond++;
+      if(board[i].name==='heart')collected.heart++;
+      board[i]=emojis[Math.floor(Math.random()*5)]; m=true;
     }
   }
-  if(matched) {
-    setTimeout(() => {render(); processMatches()}, 200);
-  } else if(score >= level*100) {
-    clearLevel();
+  if(m){setTimeout(()=>{render();updateGoal();processMatches();},200);}
+}
+
+function checkNoMoves(){
+  if(!hasMatch() && shuffles<3){
+    tg.showAlert('No moves left! Shuffle board?');
+  }else{
+    tg.showAlert('Game Over! Level failed');
+    initLevel();
   }
 }
 
-// STAR RATING SYSTEM based on time
-function getStars(timeSeconds) {
-  if(timeSeconds <= 30) return 3;
-  if(timeSeconds <= 60) return 2;
-  if(timeSeconds <= 120) return 1;
-  return 0;
+function shuffleBoard(){
+  if(shuffles>=3) return tg.showAlert('Max 3 shuffles per level');
+  if(typeof showRewarded==='function'){
+    showRewarded().then(()=>{
+      board.sort(()=>Math.random()-0.5); removeAutoMatches(); shuffles++; moves+=5; render();
+      tg.showAlert('Board shuffled! +5 moves');
+    }).catch(()=>tg.showAlert('Watch full ad to shuffle'));
+  }
 }
 
-function getMultiplier(stars) {
-  if(stars === 3) return 1.5; // +50%
-  if(stars === 2) return 1.3; // +30%
-  if(stars === 1) return 1.2; // +20%
-  return 1.0;
-}
-
-function clearLevel() {
+function finishLevel(){
   clearInterval(timer);
-  const timeTaken = Math.floor((Date.now() - startTime)/1000);
-  const stars = getStars(timeTaken);
-  const baseCoins = Math.floor(score * 0.5); // 0.5 coins per point
-  const multiplier = getMultiplier(stars);
+  const time=Math.floor((Date.now()-startTime)/1000);
+  const stars=time<=30?3:time<=60?2:time<=120?1:0;
+  const base=level*50;
+  const bonus=stars===3?1.5:stars===2?1.3:stars===1?1.2:1;
+  const finalCoins=Math.floor(base*bonus);
 
-  // Show stars popup
-  document.getElementById('starsDisplay').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
-
-  // Store pending reward for ad double
-  pendingMultiplier = multiplier;
-
-  tg.showAlert(`Level ${level} Complete!\nTime: ${timeTaken}s\nStars: ${stars}⭐\nBase: ${baseCoins} coins\nBonus: +${Math.floor(baseCoins * (multiplier-1))} coins\nWatch ad to DOUBLE coins?`,
-    () => showDoubleAd(baseCoins, multiplier));
-
-  level++;
-  setTimeout(initBoard, 3000);
-}
-
-function showDoubleAd(baseCoins, multiplier) {
-  if(typeof showRewarded === 'function') {
-    showRewarded().then(() => {
-      // User watched ad = 2x coins
-      const finalCoins = Math.floor(baseCoins * multiplier * 2);
-      coins += finalCoins;
-      tg.showAlert(`+${finalCoins} coins! 2x bonus applied`);
-      updateUI();
-    }).catch(e => {
-      // No ad = normal coins
-      const finalCoins = Math.floor(baseCoins * multiplier);
-      coins += finalCoins;
-      tg.showAlert(`+${finalCoins} coins!`);
-      updateUI();
-    });
-  } else {
-    const finalCoins = Math.floor(baseCoins * multiplier);
-    coins += finalCoins;
-    updateUI();
-  }
-}
-
-function endGame() {
-  clearInterval(timer);
-  if(revives > 0) {
-    tg.showAlert(`Out of moves! Score ${score}. Watch ad for +5 moves?`, skillRevive);
-  } else {
-    tg.showAlert(`Game Over! Final Score: ${score}`);
-  }
-
-  // Monetag interstitial every 2 levels
-  gamesPlayed++;
-  if(gamesPlayed % 2 === 0 &&!hasPremium && typeof showInterstitial === 'function') {
-    showInterstitial();
-  }
-}
-
-// MONETAG REWARDED for +5 moves
-function skillRevive() {
-  if(revives <= 0) return tg.showAlert('No revives left');
-
-  if(typeof showRewarded === 'function') {
-    showRewarded().then(() => {
-      revives--;
-      moves += 5;
-      updateUI();
-      tg.showAlert('+5 moves added!');
-    }).catch(e => {
-      tg.showAlert('Watch full ad for moves');
-    });
-  }
-}
-
-// TELEGRAM STARS 250⭐ for no ads
-function buyNoAds() {
-  if(hasPremium) return tg.showAlert('You already have Premium');
-
-  tg.openInvoice({
-    title: 'No Ads Premium',
-    description: 'Remove all ads forever + 2x coins',
-    payload: 'no_ads_v3',
-    currency: 'XTR',
-    prices: [{label: 'Premium', amount: 250}] // 250 Stars = ~$1.99
-  }, (status) => {
-    if(status === 'paid') {
-      hasPremium = true;
-      tg.showAlert('Premium activated! No more ads + 2x coins');
-      updateUI();
-    }
+  document.getElementById('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  tg.showAlert(`Level ${level} Complete!\nTime: ${time}s\nStars: ${stars}⭐\nCoins: +${finalCoins}\nWatch ad for 2x coins?`,()=>{
+    if(typeof showRewarded==='function')showRewarded().then(()=>{coins+=finalCoins*2;updateUI();tg.showAlert('2x bonus applied!')});
+    else{coins+=finalCoins;updateUI();}
   });
+  level++; updateUI(); setTimeout(initLevel,3000);
 }
 
-function updateUI() {
-  document.getElementById('level').textContent = level;
-  document.getElementById('coins').textContent = coins;
-  document.getElementById('revives').textContent = revives;
-  document.getElementById('moves').textContent = moves;
-  document.getElementById('score').textContent = score;
+function updateGoal(){
+  document.getElementById('collected_diamond').textContent=collected.diamond;
+  document.getElementById('collected_heart').textContent=collected.heart;
 }
 
-initBoard();
+function updateUI(){
+  document.getElementById('level').textContent=level;
+  document.getElementById('coins').textContent=coins;
+  document.getElementById('moves').textContent=moves;
+  const top=Math.max(coins,parseInt(localStorage.topscore||0));
+  document.getElementById('topscore').textContent=top;
+  localStorage.topscore=top;
+}
+
+function shareScore(){
+  const text = `I scored ${coins} coins in Rael Match Arena! Beat me if you can 💎`;
+  tg.shareUrl('https://t.me/share/url?url='+encodeURIComponent('https://t.me/RaelKertiaArenaBot?startapp=score'+coins)+'&text='+encodeURIComponent(text));
+}
+
+function shareDuel(){
+  const text = 'Challenge me to a duel in Rael Kertia Arena ⚔️';
+  tg.shareUrl('https://t.me/share/url?url='+encodeURIComponent('https://t.me/RaelKertiaArenaBot?startapp=duel')+'&text='+encodeURIComponent(text));
+}
+
+function showView(id, btn){
+  document.querySelectorAll('.container').forEach(c=>c.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openStore(){showView('storeview', document.querySelectorAll('.navbtn')[3]);}
+
+function buySkin(skin,price){
+  tg.openInvoice({title:skin+' Skin',description:'Unlock '+skin+' theme',payload:skin,currency:'XTR',prices:[{label:skin,amount:price}]},status=>{if(status==='paid')tg.showAlert(skin+' theme unlocked!')});
+}
+
+function buyNoAds(){
+  tg.openInvoice({title:'Remove Ads',description:'No ads forever + 2x coins',payload:'noads',currency:'XTR',prices:[{label:'Premium',amount:250}]},status=>{if(status==='paid'){hasPremium=true;tg.showAlert('Premium activated! No more ads')}});
+}
+
+initLevel();
 </script>
 </body>
 </html>
