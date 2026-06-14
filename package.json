@@ -1,0 +1,12 @@
+{
+  "name": "rael-kertia-arena",
+  "version": "1.0.0",
+  "description": "Fair skill game bot for Telegram. No pay2win.",
+  "main": "api/bot.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "telegraf": "^4.12.2"
+  }
+}
