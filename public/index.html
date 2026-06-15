@@ -4,23 +4,25 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Rael Kertia Arena</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{--bg:#0a0f1e; --text:#e5e7eb; --nav:#0b1222}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
 .wrap{height:100vh; display:flex; flex-direction:column}
   header{display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
-.profile{display:flex; align-items:center; gap:8px}
-.logo{width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #4ade80; cursor:pointer}
+.profile{display:flex; align-items:center; gap:8px; cursor:pointer}
+.logo{width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #4ade80}
 .profile-info{font-size:12px}
 .profile-info.name{font-weight:700}
 .profile-info.rank{font-size:10px; color:#9aa3b2}
+.vip{font-size:8px; background:#f59e0b; color:#000; padding:1px 4px; border-radius:4px; margin-left:4px}
 .hud{display:flex; gap:6px; font-size:11px}
 .pill{padding:4px 7px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
 .goal{font-size:11px; color:#f59e0b; text-align:center; padding:5px; display:flex; gap:10px; justify-content:center}
 .timer{color:#ef4444; font-weight:700}
 .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:8px}
-.board{display:grid; grid-template-columns:repeat(8,1fr); gap:2px; width:min(98vw,480px); height:min(98vw,480px); max-height:55vh; background:#0b1222; padding:5px; border-radius:14px; border:1px solid #1f2937}
+.board{display:grid; grid-template-columns:repeat(8, 1fr); gap:2px; width:min(98vw, 480px); height:min(98vw, 480px); max-height:55vh; background:#0b1222; padding:5px; border-radius:14px; border:1px solid #1f2937}
 .tile{border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:min(5.5vw,26px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
 .tile:active{transform:scale(.92)}
 .tile.empty{background:#0b1222; border:1px dashed #1f2937}
@@ -28,6 +30,10 @@
 .suit-s{background:#3b82f6; color:#fff}
 .suit-h{background:#ef4444; color:#fff}
 .suit-c{background:#22c55e; color:#fff}
+/* SKILL TILES */
+.tile.skill-laser{background:linear-gradient(90deg,#3b82f6,#60a5fa); color:#fff; box-shadow:0 0 10px #3b82f6}
+.tile.skill-bomb{background:radial-gradient(circle,#fbbf24,#f59e0b); color:#000; box-shadow:0 0 12px #fbbf24}
+.tile.skill-ufo{background:linear-gradient(135deg,#a855f7,#ec4899); color:#fff; box-shadow:0 0 15px #a855f7}
 .bottomNav{display:flex; justify-content:space-around; padding:6px 0; background:var(--nav); border-top:1px solid #1f2937}
 .navBtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px; background:none; border:none; color:#9aa3b2; font-size:10px; cursor:pointer}
 .navBtn.active{color:#4ade80}
@@ -43,18 +49,17 @@
 .modal.show{display:flex}
 .card{width:90vw; max-width:360px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:18px; text-align:center}
 .storeGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px}
-.storeItem{background:#1a2333; border:1px solid #2d3748; border-radius:12px; padding:12px; cursor:pointer}
-.storeItem:active{transform:scale(.95)}
+.storeItem{background:#1a2333; border:1px solid #2d3748; border-radius:12px; padding:12px; cursor:pointer; opacity:0.5}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="profile">
-      <img class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen" onclick="openProfile()">
+    <div class="profile" onclick="openProfile()">
+      <img class="logo" id="userPic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest">
       <div class="profile-info">
-        <div class="name">Sstephen</div>
+        <div class="name"><span id="userName">Guest</span><span id="vipBadge" class="vip" style="display:none">VIP</span></div>
         <div class="rank">Rank: <span id="rank">Bronze</span></div>
       </div>
     </div>
@@ -109,32 +114,20 @@
   </div>
 </div>
 
+<div id="profileModal" class="modal">
+  <div class="card">
+    <img id="profilePic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest" style="width:64px;border-radius:50%;margin-bottom:8px">
+    <h2 id="profileName">Guest</h2>
+    <p>Rank: <span id="profileRank">Bronze</span></p>
+    <p style="font-size:10px; color:#666" id="profileId"></p>
+    <button onclick="document.getElementById('profileModal').classList.remove('show')" style="width:100%;margin-top:12px">Close</button>
+  </div>
+</div>
+
 <div id="storeModal" class="modal">
   <div class="card">
-    <h2>🛒 Store - Buy with Telegram Stars</h2>
-    <div style="font-size:12px; color:#9aa3b2; margin-bottom:8px">You have: <span id="starBalance">0</span> ⭐</div>
-    <div class="storeGrid">
-      <div class="storeItem" onclick="buyItem('bomb', 25)">
-        <div style="font-size:24px">💣</div>
-        <div style="font-size:12px">Bomb</div>
-        <div style="font-size:11px; color:#fbbf24">25 ⭐</div>
-      </div>
-      <div class="storeItem" onclick="buyItem('laser', 40)">
-        <div style="font-size:24px">⚡</div>
-        <div style="font-size:12px">Laser</div>
-        <div style="font-size:11px; color:#fbbf24">40 ⭐</div>
-      </div>
-      <div class="storeItem" onclick="buyItem('sickle', 35)">
-        <div style="font-size:24px">⚔️</div>
-        <div style="font-size:12px">Sickle</div>
-        <div style="font-size:11px; color:#fbbf24">35 ⭐</div>
-      </div>
-      <div class="storeItem" onclick="buyItem('ufo', 50)">
-        <div style="font-size:24px">🛸</div>
-        <div style="font-size:12px">UFO</div>
-        <div style="font-size:11px; color:#fbbf24">50 ⭐</div>
-      </div>
-    </div>
+    <h2>🛒 Store - 72h Observation Mode</h2>
+    <div style="font-size:12px; color:#9aa3b2; margin-bottom:8px">Store opens after observation period</div>
     <button onclick="closeStore()" style="width:100%; margin-top:12px">Close</button>
   </div>
 </div>
@@ -142,25 +135,29 @@
 <audio id="sndMatch" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
 
 <script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
 const SIZE=8;
-const SUITS=[{s:'♦️',c:'suit-d'},{s:'♠️',c:'suit-s'},{s:'♣️',c:'suit-c'},{s:'♥️',c:'suit-h'}];
+const SUITS=[{s:'♦️',c:'suit-d',type:'normal'},{s:'♠️',c:'suit-s',type:'normal'},{s:'♣️',c:'suit-c',type:'normal'},{s:'♥️',c:'suit-h',type:'normal'},{s:'⚡',c:'skill-laser',type:'laser'},{s:'💣',c:'skill-bomb',type:'bomb'},{s:'🛸',c:'skill-ufo',type:'ufo'}];
 let grid=[], dragStart=null, lock=false;
 let points=0, stars=0, shuffles=10, moves=0, timer=null, timeLeft=120;
 let goals={diamond:0, target:20}, level=1;
-let inventory={bomb:0, laser:0, sickle:0, ufo:0};
+let isVIP=false;
 
-function getRank(score){
-  if(score>=100000) return 'Mythic '+Math.max(1,1000-Math.floor(score/100));
-  if(score>=50000) return 'Mythic';
-  if(score>=25000) return 'Legend';
-  if(score>=10000) return 'Grandmaster';
-  if(score>=5000) return 'Master';
-  if(score>=1000) return 'Elite';
-  if(score>=500) return 'Gold';
-  if(score>=100) return 'Silver';
-  return 'Bronze';
+// INIT TELEGRAM USER
+const user = tg.initDataUnsafe.user;
+if(user){
+  document.getElementById('userName').textContent = user.first_name;
+  document.getElementById('profileName').textContent = user.first_name;
+  document.getElementById('profileId').textContent = 'ID: ' + user.id;
+  if(user.photo_url){
+    document.getElementById('userPic').src = user.photo_url;
+    document.getElementById('profilePic').src = user.photo_url;
+  }
 }
 
+// PHASE 1: 8x8 GRID + PROFILE DONE
 function init(newLevel=false){
   lock=false;
   if(newLevel) level++;
@@ -190,12 +187,18 @@ function render(){
   board.innerHTML='';
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
     const tile=document.createElement('div');
-    if(grid[r][c]==-1){
+    const cell = grid[r][c];
+    if(cell==-1){
       tile.className='tile empty';
       tile.textContent='';
+    } else if(typeof cell === 'object' && cell.type){
+      // SKILL TILE
+      tile.className='tile '+cell.c;
+      tile.textContent=cell.s;
+      tile.dataset.skill=cell.type;
     } else {
-      tile.className='tile '+SUITS[grid[r][c]].c;
-      tile.textContent=SUITS[grid[r][c]].s;
+      tile.className='tile '+SUITS[cell].c;
+      tile.textContent=SUITS[cell].s;
     }
     tile.dataset.r=r; tile.dataset.c=c;
     tile.onmousedown = dragStartHandler;
@@ -204,6 +207,41 @@ function render(){
     tile.ontouchend = dragEndHandler;
     board.appendChild(tile);
   }
+}
+
+// PHASE 2 HOOK: COMBO DETECTION
+function getMatchShape(coords){
+  if(coords.length < 4) return 'normal';
+
+  // Check if 5 in a row/col
+  if(coords.length >= 5){
+    const rows = [...new Set(coords.map(c=>c[0]))];
+    const cols = [...new Set(coords.map(c=>c[1]))];
+    if(rows.length === 1 || cols.length === 1) return 'ufo';
+  }
+
+  // Check if 4 in a row/col
+  if(coords.length === 4){
+    const rows = [...new Set(coords.map(c=>c[0]))];
+    const cols = [...new Set(coords.map(c=>c[1]))];
+    if(rows.length === 1 || cols.length === 1) return 'laser';
+  }
+
+  // Check T or L shape for bomb
+  if(coords.length >= 4){
+    const center = coords[0];
+    const adj = coords.filter(c => Math.abs(c[0]-center[0])+Math.abs(c[1]-center[1]) === 1);
+    if(adj.length >= 3) return 'bomb';
+  }
+
+  return 'normal';
+}
+
+function spawnSkill(type, pos){
+  // PHASE 2: Disabled for 72h testing. Enable after retention confirmed
+  // const skillMap = {laser:4, bomb:5, ufo:6};
+  // grid[pos[0]][pos[1]] = {s:SUITS[skillMap[type]].s, c:SUITS[skillMap[type]].c, type:type};
+  console.log('Skill would spawn:', type, 'at', pos);
 }
 
 function dragStartHandler(e){
@@ -260,13 +298,21 @@ function findMatches(){
 async function resolve(matches){
   let combo=1;
   while(matches.length>0){
+    // PHASE 2: Detect skill before clearing
+    matches.forEach(match=>{
+      const shape = getMatchShape(match);
+      if(shape!== 'normal' && combo === 1){ // Only spawn on first clear
+        spawnSkill(shape, match[0]);
+      }
+    });
+
     const pts=matches.length*10*combo;
     points+=pts;
     addPop(pts);
     document.getElementById('sndMatch').play().catch(()=>{});
 
     matches.forEach(([r,c])=>{
-      if(SUITS[grid[r][c]].s==='♦️') goals.diamond++;
+      if(typeof grid[r][c] === 'number' && SUITS[grid[r][c]].s==='♦️') goals.diamond++;
       grid[r][c]=-1;
     });
 
@@ -281,7 +327,7 @@ function collapse(){
   for(let c=0;c<SIZE;c++){
     let write=SIZE-1;
     for(let r=SIZE-1;r>=0;r--){
-      if(grid[r][c]>=0){ grid[write][c]=grid[r][c]; write-- }
+      if(grid[r][c]!==-1){ grid[write][c]=grid[r][c]; write-- }
     }
     for(let r=write;r>=0;r--) grid[r][c]=-1;
   }
@@ -301,12 +347,25 @@ function addPop(v){
   setTimeout(()=>pop.remove(), 600);
 }
 
+function getRank(score){
+  if(score>=100000) return 'Mythic '+Math.max(1,1000-Math.floor(score/100));
+  if(score>=50000) return 'Mythic';
+  if(score>=25000) return 'Legend';
+  if(score>=10000) return 'Grandmaster';
+  if(score>=5000) return 'Master';
+  if(score>=1000) return 'Elite';
+  if(score>=500) return 'Gold';
+  if(score>=100) return 'Silver';
+  return 'Bronze';
+}
+
 function updateHUD(){
   document.getElementById('points').textContent=points;
   document.getElementById('stars').textContent=stars;
   document.getElementById('shuffles').textContent=shuffles;
   document.getElementById('shuffleCount').textContent='('+shuffles+')';
   document.getElementById('rank').textContent=getRank(points);
+  document.getElementById('profileRank').textContent=getRank(points);
   const mins=Math.floor(timeLeft/60), secs=timeLeft%60;
   document.getElementById('goalBar').innerHTML=`
     <span>${goals.diamond}/${goals.target} ♦️</span>
@@ -345,6 +404,7 @@ function endRound(win){
 // SAFE AD CALL
 async function safeShowAd(){
   if(typeof show_11148292 === 'function'){
+    console.log('Ad started'); // TELEMETRY HOOK
     return await show_11148292();
   } else {
     toast('Ad SDK loading...');
@@ -400,18 +460,23 @@ async function showAdThenNext(){
   }
 }
 
+// PROFILE MODAL
+function openProfile(){
+  document.getElementById('profileModal').classList.add('show');
+  if(isVIP) document.getElementById('vipBadge').style.display='inline';
+}
+
 // BOTTOM NAV
 function showTab(tab){
   document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active'));
   event.target.closest('.navBtn').classList.add('active');
 
   if(tab==='store'){
-    document.getElementById('starBalance').textContent=stars;
     document.getElementById('storeModal').classList.add('show');
   } else if(tab==='duel'){
-    toast('Duel mode coming in V5.1');
+    toast('Duel mode coming V5.2');
   } else if(tab==='leaderboard'){
-    toast('Leaderboard coming in V5.1');
+    toast('Leaderboard manual for now');
   } else {
     document.getElementById('storeModal').classList.remove('show');
   }
@@ -420,40 +485,6 @@ function showTab(tab){
 function closeStore(){
   document.getElementById('storeModal').classList.remove('show');
   document.querySelectorAll('.navBtn')[0].classList.add('active');
-}
-
-// STORE - DISABLED DURING 72H SILENT PERIOD
-async function buyItem(item, price){
-  // During 72h observation: disable real payment
-  toast('Store opens after 72h observation period');
-  return;
-
-  // AFTER 72H: Use this code with backend
-  /*
-  try{
-    const response = await fetch('/api/create-invoice', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ item, price, user_id: Telegram.WebApp.initDataUnsafe.user?.id })
-    });
-    const data = await response.json();
-    Telegram.WebApp.openInvoice(data.url, (status) => {
-      if(status === 'paid'){
-        stars -= price;
-        inventory[item]++;
-        toast(item+' bought!');
-        document.getElementById('starBalance').textContent=stars;
-        updateHUD();
-      }
-    });
-  } catch(e){
-    toast('Payment error');
-  }
-  */
-}
-
-function openProfile(){
-  toast('Profile settings coming soon');
 }
 
 document.getElementById('btnDuel').onclick=()=>showTab('duel');
