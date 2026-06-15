@@ -1,256 +1,469 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Rael Match Arena</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src='//monetag.com/sdk/rewarded.js' data-zone='3371302' data-callback='onRewarded'></script>
-<script src='//monetag.com/sdk/interstitial.js' data-zone='3371302'></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Rael Kertia Arena - Match 3</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a1a2a;color:#fff;font-family:-apple-system,Arial;overflow:hidden}
-.topbar{position:fixed;top:0;left:0;right:0;height:50px;background:#132032;display:flex;align-items:center;justify-content:space-between;padding:0 15px;z-index:10;border-bottom:2px solid #1a2f45}
-.topbar.left{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:bold}
-.topbar.right{font-size:12px;color:#ffd700}
-.container{padding:60px 15px 70px 15px;height:100vh;overflow-y:auto}
-.card{background:#1a2f45;border-radius:20px;padding:15px;margin:10px auto;max-width:400px}
-.goal{font-size:13px;margin:8px 0;color:#ffd700;display:flex;align-items:center;justify-content:center;gap:5px}
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:280px;margin:15px auto}
-.tile{aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:all 0.15s}
-.tile:active{transform:scale(0.9)}
-.tile.selected{border:3px solid #ffd700;transform:scale(1.05)}
-.tile.hint{animation:hintGlow 0.6s infinite alternate}
-@keyframes hintGlow{0%{box-shadow:0 0 5px #ffd700}100%{box-shadow:0 0 20px #ffd700}}
-.bottomnav{position:fixed;bottom:0;left:0;right:0;height:60px;background:#132032;display:flex;justify-content:space-around;align-items:center;border-top:2px solid #1a2f45}
-.navbtn{flex:1;text-align:center;font-size:11px;color:#aaa;cursor:pointer;padding:5px}
-.navbtn.active{color:#25a25a;font-weight:bold}
-.btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(90deg,#25a25a,#1a7a45);color:white;font-size:15px;font-weight:bold;margin:6px 0;cursor:pointer}
-.btn:active{transform:scale(0.97)}
-.btn-stars{background:linear-gradient(90deg,#ffd700,#ff8c00);color:#000}
-.stats{display:flex;justify-content:space-between;font-size:13px;margin:8px 0}
-.stars{font-size:22px;text-align:center;margin:5px}
-h3{margin:10px 0;text-align:center}
+  :root{
+    --bg:#0b1020; --panel:#121a2b; --accent:#4ade80; --danger:#ef4444;
+    --gold:#f59e0b; --text:#e5e7eb; --muted:#9aa3b2;
+    --g1:#22c55e; --g2:#3b82f6; --g3:#a855f7; --g4:#f97316; --g5:#eab308;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent}
+  html,body{height:100%; margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu}
+ .wrap{display:flex; flex-direction:column; height:100%}
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:10px 12px; background:linear-gradient(180deg, #0f172a, #0b1222);
+    border-bottom:1px solid #1f2937; position:sticky; top:0; z-index:10
+  }
+ .brand{display:flex; align-items:center; gap:10px}
+ .logo{width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #22c55e, #065f46)}
+ .title{font-weight:700}
+ .hud{display:flex; gap:8px; flex-wrap:wrap}
+ .pill{padding:6px 10px; border-radius:999px; background:#0f172a; border:1px solid #1f2937; font-size:12px; display:flex; gap:6px; align-items:center}
+ .pill b{color:var(--text)}
+ .pill.v{color:var(--accent)}
+ .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:12px}
+ .board{
+    display:grid; grid-template-columns: repeat(8, 1fr);
+    gap:6px; width:min(92vw, 560px); aspect-ratio:1/1;
+    background:linear-gradient(180deg,#0a1224,#0b1224); padding:10px; border-radius:16px;
+    border:1px solid #1f2937; box-shadow:0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.03)
+  }
+ .tile{
+    position:relative; border-radius:12px; cursor:pointer; user-select:none;
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    background:linear-gradient(180deg,#0f172a,#0b1222); border:1px solid #1f2937;
+    transition: transform.15s ease, filter.15s ease, box-shadow.15s ease;
+  }
+ .tile:active{transform:scale(.97)}
+ .tile.selected{outline:2px solid var(--gold); box-shadow:0 0 0 3px rgba(245,158,11,.25)}
+ .gem{width:70%; height:70%; border-radius:50%; box-shadow:inset 0 8px 18px rgba(255,255,255,.25), 0 6px 14px rgba(0,0,0,.35)}
+ .g1{background:radial-gradient(circle at 30% 30%, #4ade80, #15803d)}
+ .g2{background:radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8)}
+ .g3{background:radial-gradient(circle at 30% 30%, #c084fc, #7e22ce)}
+ .g4{background:radial-gradient(circle at 30% 30%, #fb923c, #c2410c)}
+ .g5{background:radial-gradient(circle at 30% 30%, #fde047, #b45309)}
+ .footer{
+    display:flex; gap:8px; padding:10px 12px; border-top:1px solid #1f2937; background:#0b1222; flex-wrap:wrap
+  }
+  button{
+    appearance:none; border:none; border-radius:12px; padding:10px 14px; font-weight:700;
+    background:#111827; color:var(--text); cursor:pointer; border:1px solid #1f2937
+  }
+  button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
+  button.warn{background:linear-gradient(180deg,#f59e0b,#b45309)}
+  button.ghost{background:transparent}
+ .toast{
+    position:fixed; left:50%; bottom:84px; transform:translateX(-50%); background:#0f172a;
+    border:1px solid #1f2937; color:var(--text); padding:10px 14px; border-radius:999px;
+    box-shadow:0 10px 30px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity.2s
+  }
+ .toast.show{opacity:1}
+ .row{display:flex; gap:8px; align-items:center}
+ .small{font-size:12px; color:var(--muted)}
+ .scoreUp{position:absolute; font-weight:800; color:var(--accent); animation:score 800ms ease-out forwards; pointer-events:none}
+  @keyframes score{0%{opacity:0; transform:translateY(0)} 20%{opacity:1} 100%{opacity:0; transform:translateY(-24px)}}
+ .modal{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index:50
+  }
+ .modal.show{display:flex}
+ .card{
+    width:min(92vw, 420px); background:#0b1222; border:1px solid #1f2937; border-radius:16px;
+    padding:16px; box-shadow:0 20px 60px rgba(0,0,0,.6)
+  }
+ .card h3{margin:0 0 8px 0}
+ .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+ .hint{font-size:12px; color:var(--muted); margin-top:6px}
 </style>
+<!-- MONETAG SDK -->
+<script src='//libtl.com/sdk.js' data-zone='8655637' data-sdk='show_8655637'></script>
 </head>
 <body>
-
-<div class="topbar">
-  <div class="left"><span id="avatar">👤</span><span id="username">Player</span></div>
-  <div class="right">Top: <b id="topscore">0</b> coins</div>
-</div>
-
-<div class="container" id="mainview">
-  <div class="card">
-    <div class="stats">
-      <span>Level: <b id="level">1</b></span>
-      <span>Coins: <b id="coins">0</b></span>
-      <span>Moves: <b id="moves">20</b></span>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <div class="title">Rael Kertia Arena</div>
+        <div class="small">Match-3 Arena</div>
+      </div>
     </div>
-
-    <div class="goal" id="goaltext">🎯 Goal: Collect 10 💎 + 10 💜</div>
-
-    <div class="stats">
-      <span>💎: <b id="collected_diamond">0</b>/<b id="goal_diamond">10</b></span>
-      <span>💜: <b id="collected_heart">0</b>/<b id="goal_heart">10</b></span>
-      <span>Time: <b id="time">0s</b></span>
+    <div class="hud">
+      <div class="pill">Score <b id="score" class="v">0</b></div>
+      <div class="pill">Coins <b id="coins" class="v">0</b></div>
+      <div class="pill">Shuffles <b id="shuffles" class="v">3</b></div>
+      <div class="pill">Moves <b id="moves" class="v">0</b></div>
     </div>
+  </header>
 
-    <div class="stars" id="stars">⭐</div>
-    <div class="grid" id="grid"></div>
+  <div class="boardWrap">
+    <div id="board" class="board"></div>
+  </div>
 
-    <button class="btn" onclick="showRewardedAd('shuffle')">🔄 Shuffle - Watch Ad +5 Moves</button>
-    <button class="btn" onclick="shareScore()">📤 Share Score</button>
-    <button class="btn btn-stars" onclick="openStore()">🛍 Store 250⭐</button>
+  <div class="footer">
+    <button class="primary" id="btnShuffle">🔄 Shuffle <span class="small">(10 coins)</span></button>
+    <button id="btnHint">💡 Hint</button>
+    <button class="ghost" id="btnReset">↺ Reset</button>
+    <button class="warn" id="btnSell">💰 Sell +100 coins</button>
+    <div class="row" style="margin-left:auto">
+      <div class="small">Goal: Match 3+ gems. Combos = more coins.</div>
+    </div>
   </div>
 </div>
 
-<div class="bottomnav">
-  <div class="navbtn active" onclick="showView('mainview', this)">🎮 Play</div>
-  <div class="navbtn" onclick="showView('friendsview', this)">👥 Friends</div>
-  <div class="navbtn" onclick="showView('leaderboardview', this)">🏆 Top</div>
-  <div class="navbtn" onclick="showView('storeview', this)">🛍 Store</div>
+<div id="toast" class="toast"></div>
+
+<div id="modal" class="modal">
+  <div class="card">
+    <h3>🎉 Level Complete!</h3>
+    <div class="small">You reached 10,000 points. Keep playing for higher scores.</div>
+    <div class="grid2" style="margin-top:12px">
+      <button class="primary" id="btnContinue">Continue</button>
+      <button class="ghost" id="btnRestart">Restart</button>
+    </div>
+  </div>
 </div>
 
-<div class="container" id="friendsview" style="display:none"><div class="card"><h3>Find Friends / Duel</h3><p style="font-size:13px;color:#aaa">Use /duel @username in chat</p><button class="btn" onclick="shareDuel()">⚔️ Invite Duel</button></div></div>
-<div class="container" id="leaderboardview" style="display:none"><div class="card"><h3>Leaderboard</h3><div id="leaderboard">Local: <b id="localtop">0</b></div></div></div>
-<div class="container" id="storeview" style="display:none"><div class="card"><h3>Store</h3><button class="btn btn-stars" onclick="buyNoAds()">🚫 Remove Ads 250⭐</button></div></div>
-
 <script>
-const tg = Telegram.WebApp; tg.expand();
-const emojis = [
-  {emoji:'💎',name:'diamond'},
-  {emoji:'💜',name:'heart'},
-  {emoji:'🟧',name:'orange'},
-  {emoji:'🟩',name:'green'},
-  {emoji:'🟦',name:'blue'}
-];
+const boardEl = document.getElementById('board');
+const scoreEl = document.getElementById('score');
+const coinsEl = document.getElementById('coins');
+const shufflesEl = document.getElementById('shuffles');
+const movesEl = document.getElementById('moves');
+const toastEl = document.getElementById('toast');
+const modalEl = document.getElementById('modal');
 
-let board=[], collected={diamond:0,heart:0}, moves=20, level=1, coins=0, startTime=0, timer=null, shuffles=0, hasPremium=false, selected=null, hintTimer=null, pendingAction=null;
+const SIZE = 8;
+const COLORS = 5;
+let grid = [];
+let selected = null;
+let score = 0;
+let coins = 0;
+let shuffles = 3;
+let moves = 0;
+let lock = false;
+let levelTarget = 10000;
 
-const user = tg.initDataUnsafe.user;
-if(user){document.getElementById('username').textContent=user.first_name; document.getElementById('avatar').textContent=user.first_name[0].toUpperCase();}
+function randColor(){ return 1 + Math.floor(Math.random()*COLORS) }
+function gemClass(c){ return 'g' + c }
 
-function getGoals(lv){const base=10; return {diamond:base+(lv-1)*10, heart:base+(lv-1)*10};}
-
-function initLevel(){
-  board=[]; moves=20; shuffles=0; selected=null; clearTimeout(hintTimer);
-  const goals=getGoals(level);
-  collected={diamond:0,heart:0};
-  document.getElementById('goal_diamond').textContent=goals.diamond;
-  document.getElementById('goal_heart').textContent=goals.heart;
-  document.getElementById('goaltext').innerHTML=`🎯 Goal: Collect ${goals.diamond} 💎 + ${goals.heart} 💜`;
-
-  for(let i=0;i<25;i++) board.push(emojis[Math.floor(Math.random()*5)]);
-  removeAutoMatches();
-  startTime=Date.now(); clearInterval(timer);
-  timer=setInterval(()=>document.getElementById('time').textContent=Math.floor((Date.now()-startTime)/1000)+'s',1000);
-  render(); updateGoal(); resetHintTimer();
+function init(){
+  grid = Array.from({length:SIZE}, () => Array.from({length:SIZE}, () => randColor()));
+  removeInitialMatches();
+  render();
+  updateHUD();
 }
 
-function removeAutoMatches(){
-  for(let i=0;i<25;i++){
-    while(checkMatchAt(i)) board[i]=emojis[Math.floor(Math.random()*5)];
+function removeInitialMatches(){
+  let changed = true;
+  while(changed){
+    changed = false;
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        const v = grid[r][c];
+        if(c>=2 && grid[r][c-1]===v && grid[r][c-2]===v){
+          grid[r][c] = randColor(); changed = true;
+        }
+        if(r>=2 && grid[r-1][c]===v && grid[r-2][c]===v){
+          grid[r][c] = randColor(); changed = true;
+        }
+      }
+    }
   }
 }
 
 function render(){
-  const grid=document.getElementById('grid'); grid.innerHTML='';
-  board.forEach((tile,idx)=>{
-    const div=document.createElement('div');
-    div.className='tile'; div.textContent=tile.emoji; div.style.background='#0f2135';
-    div.onclick=()=>clickTile(idx);
-    grid.appendChild(div);
-  });
-  updateUI();
+  boardEl.innerHTML = '';
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const tile = document.createElement('div');
+      tile.className = 'tile' + (selected && selected.r===r && selected.c===c? ' selected' : '');
+      tile.dataset.r = r; tile.dataset.c = c;
+      const gem = document.createElement('div');
+      gem.className = 'gem ' + gemClass(grid[r][c]);
+      tile.appendChild(gem);
+      tile.addEventListener('click', onTileClick);
+      boardEl.appendChild(tile);
+    }
+  }
 }
 
-function clickTile(idx){
-  clearTimeout(hintTimer);
-  if(selected===null){
-    selected=idx; document.querySelectorAll('.tile')[idx].classList.add('selected');
+function onTileClick(e){
+  if(lock) return;
+  const r = +e.currentTarget.dataset.r;
+  const c = +e.currentTarget.dataset.c;
+  if(!selected){
+    selected = {r,c};
+    render();
+    return;
+  }
+  if(selected.r===r && selected.c===c){
+    selected = null;
+    render();
+    return;
+  }
+  if(!isAdjacent(selected.r, selected.c, r, c)){
+    selected = {r,c};
+    render();
+    return;
+  }
+  swap(selected.r, selected.c, r, c);
+  const matches = findAllMatches();
+  if(matches.length===0){
+    swap(selected.r, selected.c, r, c);
+    selected = null;
+    render();
+    toast('No match. Try again!');
+    return;
+  }
+  lock = true;
+  moves++;
+  resolveMatches(matches);
+  selected = null;
+  render();
+  updateHUD();
+  if(score >= levelTarget){
+    modalEl.classList.add('show');
+  }
+}
+
+function isAdjacent(r1,c1,r2,c2){
+  return (Math.abs(r1-r2)===1 && c1===c2) || (Math.abs(c1-c2)===1 && r1===r2);
+}
+
+function swap(r1,c1,r2,c2){
+  const tmp = grid[r1][c1];
+  grid[r1][c1] = grid[r2][c2];
+  grid[r2][c2] = tmp;
+}
+
+function findAllMatches(){
+  const matched = new Set();
+  for(let r=0;r<SIZE;r++){
+    let count=1;
+    for(let c=1;c<SIZE;c++){
+      if(grid[r][c]===grid[r][c-1]) count++;
+      else{
+        if(count>=3){
+          for(let k=c-count;k<c;k++) matched.add(r+','+k);
+        }
+        count=1;
+      }
+    }
+    if(count>=3){
+      for(let k=SIZE-count;k<SIZE;k++) matched.add(r+','+k);
+    }
+  }
+  for(let c=0;c<SIZE;c++){
+    let count=1;
+    for(let r=1;r<SIZE;r++){
+      if(grid[r][c]===grid[r-1][c]) count++;
+      else{
+        if(count>=3){
+          for(let k=r-count;k<r;k++) matched.add(k+','+c);
+        }
+        count=1;
+      }
+    }
+    if(count>=3){
+      for(let k=SIZE-count;k<SIZE;k++) matched.add(k+','+c);
+    }
+  }
+  return Array.from(matched).map(s => s.split(',').map(Number));
+}
+
+async function resolveMatches(matches){
+  const unique = new Set(matches.map(([r,c]) => r+','+c));
+  let combo = 1;
+  while(unique.size>0){
+    for(const key of unique){
+      const [r,c] = key.split(',').map(Number);
+      const tile = boardEl.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
+      if(tile){
+        const up = document.createElement('div');
+        up.className = 'scoreUp';
+        up.textContent = '+' + (10*combo);
+        tile.appendChild(up);
+        setTimeout(()=>up.remove(), 800);
+      }
+    }
+    score += unique.size * 10 * combo;
+    coins += unique.size * combo;
+    for(const key of unique){
+      const [r,c] = key.split(',').map(Number);
+      grid[r][c] = 0;
+    }
+    render();
+    await sleep(200);
+    collapse();
+    render();
+    await sleep(200);
+    fill();
+    render();
+    await sleep(200);
+    const newMatches = findAllMatches();
+    unique.clear();
+    newMatches.forEach(([r,c]) => unique.add(r+','+c));
+    combo++;
+  }
+  lock = false;
+}
+
+function collapse(){
+  for(let c=0;c<SIZE;c++){
+    let write = SIZE-1;
+    for(let r=SIZE-1;r>=0;r--){
+      if(grid[r][c]!==0){
+        grid[write][c] = grid[r][c];
+        if(write!==r) grid[r][c] = 0;
+        write--;
+      }
+    }
+  }
+}
+
+function fill(){
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      if(grid[r][c]===0) grid[r][c] = randColor();
+    }
+  }
+}
+
+function sleep(ms){ return new Promise(res => setTimeout(res, ms)) }
+
+function updateHUD(){
+  scoreEl.textContent = score;
+  coinsEl.textContent = coins;
+  shufflesEl.textContent = shuffles;
+  movesEl.textContent = moves;
+}
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 1400);
+}
+
+// BUTTONS
+document.getElementById('btnShuffle').addEventListener('click', async () => {
+  if(shuffles<=0){
+    toast('No shuffles left. Watch ad for +1 shuffle');
+    await showAdForShuffle();
+    return;
+  }
+  if(coins<10){
+    toast('Need 10 coins. Watch ad for +1 shuffle');
+    await showAdForShuffle();
+    return;
+  }
+  coins -= 10;
+  shuffles--;
+  shuffleBoard();
+  updateHUD();
+});
+
+document.getElementById('btnHint').addEventListener('click', () => {
+  const hint = findHint();
+  if(hint){
+    const [r1,c1,r2,c2] = hint;
+    const t1 = boardEl.querySelector(`.tile[data-r="${r1}"][data-c="${c1}"]`);
+    const t2 = boardEl.querySelector(`.tile[data-r="${r2}"][data-c="${c2}"]`);
+    t1.style.outline = '2px solid var(--gold)';
+    t2.style.outline = '2px solid var(--gold)';
+    setTimeout(()=>{
+      t1.style.outline = '';
+      t2.style.outline = '';
+    }, 1000);
   } else {
-    document.querySelectorAll('.tile')[selected].classList.remove('selected');
-    if(isAdj(selected,idx)){
-      [board[selected],board[idx]]=[board[idx],board[selected]];
-      if(!hasMatch()){[board[selected],board[idx]]=[board[idx],board[selected]]; tg.showAlert('No match!');}
-      else{moves--; processMatches();}
+    toast('No moves. Shuffle board!');
+  }
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  score = 0; coins = 0; shuffles = 3; moves = 0;
+  init();
+});
+
+document.getElementById('btnSell').addEventListener('click', () => {
+  coins += 100;
+  updateHUD();
+  toast('+100 coins');
+});
+
+document.getElementById('btnContinue').addEventListener('click', () => {
+  modalEl.classList.remove('show');
+  levelTarget += 10000;
+  toast('New target: ' + levelTarget);
+});
+
+document.getElementById('btnRestart').addEventListener('click', () => {
+  modalEl.classList.remove('show');
+  score = 0; coins = 0; shuffles = 3; moves = 0; levelTarget = 10000;
+  init();
+});
+
+// SHUFFLE LOGIC
+function shuffleBoard(){
+  const flat = grid.flat();
+  do{
+    for(let i=flat.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [flat[i], flat[j]] = [flat[j], flat[i]];
     }
-    selected=null; render(); resetHintTimer();
-    if(moves<=0) checkNoMoves();
-    const goals=getGoals(level);
-    if(collected.diamond>=goals.diamond && collected.heart>=goals.heart) finishLevel();
-  }
-}
-
-function isAdj(a,b){const d=Math.abs(a-b);return (d===1&&Math.floor(a/5)===Math.floor(b/5))||d===5;}
-function hasMatch(){for(let i=0;i<25;i++)if(checkMatchAt(i))return true;return false;}
-function checkMatchAt(i){const e=board[i].emoji;const x=i%5,y=Math.floor(i/5);if(x<3&&board[i+1].emoji===e&&board[i+2].emoji===e)return true;if(y<3&&board[i+5].emoji===e&&board[i+10].emoji===e)return true;return false;}
-
-function processMatches(){
-  let m=false;
-  for(let i=0;i<25;i++){
-    if(checkMatchAt(i)){
-      if(board[i].name==='diamond')collected.diamond++;
-      if(board[i].name==='heart')collected.heart++;
-      board[i]=emojis[Math.floor(Math.random()*5)]; m=true;
+    let idx=0;
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        grid[r][c] = flat[idx++];
+      }
     }
-  }
-  if(m){setTimeout(()=>{render();updateGoal();processMatches();},200);}
+  } while(findAllMatches().length>0);
+  render();
 }
 
-function resetHintTimer(){
-  clearTimeout(hintTimer);
-  hintTimer=setTimeout(showHint,1100);
-}
-
-function showHint(){
-  document.querySelectorAll('.tile').forEach(t=>t.classList.remove('hint'));
-  const move=findAnyMove();
-  if(move){
-    document.querySelectorAll('.tile')[move[0]].classList.add('hint');
-    setTimeout(()=>document.querySelectorAll('.tile')[move[0]].classList.remove('hint'),2000);
-  }
-}
-
-function findAnyMove(){
-  for(let i=0;i<25;i++){
-    for(let j=i+1;j<25;j++){
-      if(isAdj(i,j)){
-        [board[i],board[j]]=[board[j],board[i]];
-        const ok=checkMatchAt(i)||checkMatchAt(j);
-        [board[i],board[j]]=[board[j],board[i]];
-        if(ok) return [i,j];
+function findHint(){
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      if(c<SIZE-1){
+        swap(r,c,r,c+1);
+        if(findAllMatches().length>0){
+          swap(r,c,r,c+1);
+          return [r,c,r,c+1];
+        }
+        swap(r,c,r,c+1);
+      }
+      if(r<SIZE-1){
+        swap(r,c,r+1,c);
+        if(findAllMatches().length>0){
+          swap(r,c,r+1,c);
+          return [r,c,r+1,c];
+        }
+        swap(r,c,r+1,c);
       }
     }
   }
   return null;
 }
 
-function checkNoMoves(){
-  if(!hasMatch() && shuffles<3){
-    tg.showAlert('No moves! Watch ad to shuffle');
-  }else{
-    tg.showAlert('Game Over!'); initLevel();
+// MONETAG AD FOR SHUFFLE
+async function showAdForShuffle(){
+  try{
+    await show_8655637();
+    shuffles++;
+    updateHUD();
+    toast('+1 shuffle granted');
+  } catch(e){
+    toast('Ad not available. Try again later');
+    console.log('Monetag error:', e);
   }
 }
 
-window.onRewarded = function(){
-  if(pendingAction==='shuffle'){
-    board.sort(()=>Math.random()-0.5); removeAutoMatches(); shuffles++; moves+=5; render();
-    tg.showAlert('Shuffled! +5 moves');
-  }
-  if(pendingAction==='double'){
-    const base=level*50; const stars=getStars(Math.floor((Date.now()-startTime)/1000));
-    const bonus=stars===3?1.5:stars===2?1.3:stars===1?1.2:1;
-    coins+=Math.floor(base*bonus*2);
-    tg.showAlert('2x coins applied!');
-    updateUI();
-  }
-  pendingAction=null;
-}
-
-function showRewardedAd(action){
-  pendingAction=action;
-  if(typeof showRewarded==='function'){
-    showRewarded();
-  } else {
-    tg.showAlert('Ad loading... Try again in 3s');
-    pendingAction=null;
-  }
-}
-
-function getStars(time){
-  if(time<=60) return 3; // 1 min = 3 stars
-  if(time<=120) return 2; // 2 min = 2 stars
-  if(time<=180) return 1; // 3 min = 1 star
-  return 0; // >3 min = 0 stars
-}
-
-function finishLevel(){
-  clearInterval(timer); clearTimeout(hintTimer);
-  const time=Math.floor((Date.now()-startTime)/1000);
-  const stars=getStars(time);
-  const base=level*50;
-  const bonus=stars===3?1.5:stars===2?1.3:stars===1?1.2:1;
-  const finalCoins=Math.floor(base*bonus);
-
-  document.getElementById('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
-  const starText = stars===3?'(≤60s 3⭐)':stars===2?'(≤2min 2⭐)':stars===1?'(≤3min 1⭐)':'(>3min 0⭐)';
-  tg.showAlert(`Level ${level} Complete!\nTime: ${time}s ${starText}\n+${finalCoins} Coins\nWatch ad for 2x coins?`,()=>{
-    showRewardedAd('double');
-  });
-  level++; updateUI(); setTimeout(initLevel,3000);
-}
-
-function updateGoal(){const goals=getGoals(level);document.getElementById('collected_diamond').textContent=collected.diamond;document.getElementById('collected_heart').textContent=collected.heart;}
-function updateUI(){document.getElementById('level').textContent=level;document.getElementById('coins').textContent=coins;document.getElementById('moves').textContent=moves;const top=Math.max(coins,parseInt(localStorage.topscore||0));document.getElementById('topscore').textContent=top;document.getElementById('localtop').textContent=top;localStorage.topscore=top;}
-function shareScore(){tg.shareUrl('https://t.me/share/url?url='+encodeURIComponent('https://t.me/RaelKertiaArenaBot?startapp=score'+coins)+'&text='+encodeURIComponent(`I scored ${coins} coins! Beat me 💎`));}
-function shareDuel(){tg.shareUrl('https://t.me/share/url?url='+encodeURIComponent('https://t.me/RaelKertiaArenaBot?startapp=duel')+'&text='+encodeURIComponent('Duel me in Rael Arena ⚔️'));}
-function showView(id,btn){document.querySelectorAll('.container').forEach(c=>c.style.display='none');document.getElementById(id).style.display='block';document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-function openStore(){showView('storeview',document.querySelectorAll('.navbtn')[3]);}
-function buyNoAds(){tg.openInvoice({title:'Remove Ads',description:'No ads + 2x coins',payload:'noads',currency:'XTR',prices:[{label:'Premium',amount:250}]},status=>{if(status==='paid'){hasPremium=true;tg.showAlert('Premium activated!')}});}
-
-initLevel();
+// INIT GAME
+init();
 </script>
 </body>
 </html>
