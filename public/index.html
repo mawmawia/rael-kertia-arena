@@ -5,48 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Rael Kertia Arena</title>
 <style>
-  :root{--bg:#0a0f1e; --text:#e5e7eb}
+  :root{--bg:#0a0f1e; --text:#e5e7eb; --nav:#0b1222}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
 .wrap{height:100vh; display:flex; flex-direction:column}
-  header{display:flex; justify-content:space-between; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
-.logo{width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid #4ade80}
-.hud{display:flex; gap:6px; font-size:12px}
-.pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
-.goal{font-size:12px; color:#f59e0b; text-align:center; padding:6px; display:flex; gap:12px; justify-content:center}
+  header{display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
+.profile{display:flex; align-items:center; gap:8px}
+.logo{width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #4ade80; cursor:pointer}
+.profile-info{font-size:12px}
+.profile-info.name{font-weight:700}
+.profile-info.rank{font-size:10px; color:#9aa3b2}
+.hud{display:flex; gap:6px; font-size:11px}
+.pill{padding:4px 7px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
+.goal{font-size:11px; color:#f59e0b; text-align:center; padding:5px; display:flex; gap:10px; justify-content:center}
 .timer{color:#ef4444; font-weight:700}
-.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px}
-.board{display:grid; grid-template-columns:repeat(8,1fr); gap:3px; width:min(96vw,500px); height:min(96vw,500px); max-height:60vh; background:#0b1222; padding:6px; border-radius:16px; border:1px solid #1f2937}
-.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
-.tile:active{transform:scale(.95)}
-.tile.empty{background:#0b1222; border:1px dashed #1f2937} /* Empty slot during collapse */
-/* WHOLE BLOCK COLORS */
+.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:8px}
+.board{display:grid; grid-template-columns:repeat(8,1fr); gap:2px; width:min(98vw,480px); height:min(98vw,480px); max-height:55vh; background:#0b1222; padding:5px; border-radius:14px; border:1px solid #1f2937}
+.tile{border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:min(5.5vw,26px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
+.tile:active{transform:scale(.92)}
+.tile.empty{background:#0b1222; border:1px dashed #1f2937}
 .suit-d{background:#ffffff; color:#0a0f1e}
-.suit-s{background:#2563eb; color:#fff}
-.suit-h{background:#dc2626; color:#fff}
-.suit-c{background:#16a34a; color:#fff}
-.footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222}
-  button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
+.suit-s{background:#3b82f6; color:#fff}
+.suit-h{background:#ef4444; color:#fff}
+.suit-c{background:#22c55e; color:#fff}
+.bottomNav{display:flex; justify-content:space-around; padding:6px 0; background:var(--nav); border-top:1px solid #1f2937}
+.navBtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px; background:none; border:none; color:#9aa3b2; font-size:10px; cursor:pointer}
+.navBtn.active{color:#4ade80}
+.navBtn svg{width:20px; height:20px}
+.footer{display:flex; gap:6px; padding:8px; background:#0b1222}
+  button{flex:1; padding:9px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937; font-size:12px}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
 .toast{position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#0f172a; border:1px solid #1f2937; padding:8px 12px; border-radius:999px; opacity:0; transition:.2s; z-index:999}
 .toast.show{opacity:1}
-.scorePop{position:absolute; color:#4ade80; font-weight:800; font-size:18px; animation:pop 600ms ease-out forwards; pointer-events:none}
+.scorePop{position:absolute; color:#4ade80; font-weight:800; font-size:16px; animation:pop 600ms ease-out forwards; pointer-events:none}
 @keyframes pop{0%{opacity:0; transform:translateY(0)} 30%{opacity:1} 100%{opacity:0; transform:translateY(-30px)}}
 .modal{position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:100}
 .modal.show{display:flex}
-.card{width:90vw; max-width:380px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:20px; text-align:center}
+.card{width:90vw; max-width:360px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:18px; text-align:center}
+.storeGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px}
+.storeItem{background:#1a2333; border:1px solid #2d3748; border-radius:12px; padding:12px; cursor:pointer}
+.storeItem:active{transform:scale(.95)}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div style="display:flex; align-items:center; gap:8px">
-      <img class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen">
-      <div><div style="font-weight:700">Sstephen</div><div style="font-size:11px">Rank: <span id="rank">Bronze</span></div></div>
+    <div class="profile">
+      <img class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen" onclick="openProfile()">
+      <div class="profile-info">
+        <div class="name">Sstephen</div>
+        <div class="rank">Rank: <span id="rank">Bronze</span></div>
+      </div>
     </div>
     <div class="hud">
       <div class="pill">🏆<span id="points">0</span></div>
+      <div class="pill">⭐<span id="stars">0</span></div>
       <div class="pill">🔄<span id="shuffles">10</span></div>
     </div>
   </header>
@@ -60,7 +74,25 @@
   <div class="footer">
     <button class="primary" id="btnShuffle">🔄 Shuffle <span id="shuffleCount">(10)</span></button>
     <button id="btnDuel">⚔️ Duel</button>
-    <button id="btnNew">↺ New</button>
+  </div>
+
+  <div class="bottomNav">
+    <button class="navBtn active" onclick="showTab('play')">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <span>Play</span>
+    </button>
+    <button class="navBtn" onclick="showTab('duel')">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M2 2h20v20H2z"/></svg>
+      <span>Duel</span>
+    </button>
+    <button class="navBtn" onclick="showTab('leaderboard')">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span>Top</span>
+    </button>
+    <button class="navBtn" onclick="showTab('store')">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M7 4V2h10v2h5v2H2V4h5zm2 4h6v12H9V8zm-4 0h2v12H5V8zm12 0h2v12h-2V8z"/></svg>
+      <span>Store</span>
+    </button>
   </div>
 </div>
 
@@ -69,11 +101,41 @@
 <div id="endModal" class="modal">
   <div class="card">
     <h2 id="endTitle">Round Complete!</h2>
-    <div style="font-size:32px; margin:10px 0" id="stars">⭐</div>
+    <div style="font-size:32px; margin:10px 0" id="endModalStars">⭐</div>
     <div style="font-size:18px">Points: <span id="endPoints">0</span></div>
     <div style="font-size:12px; color:#9aa3b2" id="endTime">Time: 1:23</div>
     <button class="primary" onclick="watchAdForDouble()" style="width:100%; margin-top:12px">📺 Double Points</button>
     <button onclick="showAdThenNext()" style="width:100%; margin-top:8px">Watch Ad → Next Level</button>
+  </div>
+</div>
+
+<div id="storeModal" class="modal">
+  <div class="card">
+    <h2>🛒 Store - Buy with Telegram Stars</h2>
+    <div style="font-size:12px; color:#9aa3b2; margin-bottom:8px">You have: <span id="starBalance">0</span> ⭐</div>
+    <div class="storeGrid">
+      <div class="storeItem" onclick="buyItem('bomb', 25)">
+        <div style="font-size:24px">💣</div>
+        <div style="font-size:12px">Bomb</div>
+        <div style="font-size:11px; color:#fbbf24">25 ⭐</div>
+      </div>
+      <div class="storeItem" onclick="buyItem('laser', 40)">
+        <div style="font-size:24px">⚡</div>
+        <div style="font-size:12px">Laser</div>
+        <div style="font-size:11px; color:#fbbf24">40 ⭐</div>
+      </div>
+      <div class="storeItem" onclick="buyItem('sickle', 35)">
+        <div style="font-size:24px">⚔️</div>
+        <div style="font-size:12px">Sickle</div>
+        <div style="font-size:11px; color:#fbbf24">35 ⭐</div>
+      </div>
+      <div class="storeItem" onclick="buyItem('ufo', 50)">
+        <div style="font-size:24px">🛸</div>
+        <div style="font-size:12px">UFO</div>
+        <div style="font-size:11px; color:#fbbf24">50 ⭐</div>
+      </div>
+    </div>
+    <button onclick="closeStore()" style="width:100%; margin-top:12px">Close</button>
   </div>
 </div>
 
@@ -83,8 +145,9 @@
 const SIZE=8;
 const SUITS=[{s:'♦️',c:'suit-d'},{s:'♠️',c:'suit-s'},{s:'♣️',c:'suit-c'},{s:'♥️',c:'suit-h'}];
 let grid=[], dragStart=null, lock=false;
-let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
+let points=0, stars=0, shuffles=10, moves=0, timer=null, timeLeft=120;
 let goals={diamond:0, target:20}, level=1;
+let inventory={bomb:0, laser:0, sickle:0, ufo:0};
 
 function getRank(score){
   if(score>=100000) return 'Mythic '+Math.max(1,1000-Math.floor(score/100));
@@ -127,7 +190,6 @@ function render(){
   board.innerHTML='';
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
     const tile=document.createElement('div');
-    // ALWAYS CREATE 64 TILES - even if -1
     if(grid[r][c]==-1){
       tile.className='tile empty';
       tile.textContent='';
@@ -148,7 +210,7 @@ function dragStartHandler(e){
   e.preventDefault();
   if(lock) return;
   const t=e.target.closest('.tile');
-  if(!t || t.classList.contains('empty')) return; // Can't drag empty
+  if(!t || t.classList.contains('empty')) return;
   const x = e.touches?e.touches[0].clientX:e.clientX;
   const y = e.touches?e.touches[0].clientY:e.clientY;
   dragStart={r:+t.dataset.r, c:+t.dataset.c, x:x, y:y};
@@ -169,15 +231,15 @@ function dragEndHandler(e){
 }
 
 function trySwap(r1,c1,r2,c2){
-  if(lock) return; // Prevent double swap
+  if(lock) return;
   if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) { lock=false; return }
-  lock=true; // Lock immediately
+  lock=true;
   swap(r1,c1,r2,c2);
   const matches=findMatches();
   if(matches.length===0){
     swap(r1,c1,r2,c2);
     toast('No match');
-    lock=false; // Unlock if no match
+    lock=false;
     return
   }
   moves++;
@@ -208,11 +270,11 @@ async function resolve(matches){
       grid[r][c]=-1;
     });
 
-    render(); await sleep(120);
-    collapse(); fill(); render(); await sleep(120);
+    render(); await sleep(100);
+    collapse(); fill(); render(); await sleep(100);
     matches=findMatches(); combo++;
   }
-  lock=false; // CRITICAL: unlock after everything done
+  lock=false;
 }
 
 function collapse(){
@@ -241,6 +303,7 @@ function addPop(v){
 
 function updateHUD(){
   document.getElementById('points').textContent=points;
+  document.getElementById('stars').textContent=stars;
   document.getElementById('shuffles').textContent=shuffles;
   document.getElementById('shuffleCount').textContent='('+shuffles+')';
   document.getElementById('rank').textContent=getRank(points);
@@ -267,16 +330,26 @@ function startTimer(){
 function endRound(win){
   clearInterval(timer);
   lock=true;
-  const stars = win? (timeLeft>60?3: timeLeft>30?2:1) : 0;
+  const starsWin = win? (timeLeft>60?3: timeLeft>30?2:1) : 0;
   const totalTime = level<=3?120:60;
   const usedTime = totalTime - timeLeft;
   const mins=Math.floor(usedTime/60), secs=usedTime%60;
 
   document.getElementById('endTitle').textContent= win?'🎉 Round Complete!':'💀 Time Up!';
-  document.getElementById('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('endModalStars').textContent='⭐'.repeat(starsWin)+'☆'.repeat(3-starsWin);
   document.getElementById('endPoints').textContent=points;
   document.getElementById('endTime').textContent=`Time: ${mins}:${secs.toString().padStart(2,'0')} | Level ${level}`;
   document.getElementById('endModal').classList.add('show');
+}
+
+// SAFE AD CALL
+async function safeShowAd(){
+  if(typeof show_11148292 === 'function'){
+    return await show_11148292();
+  } else {
+    toast('Ad SDK loading...');
+    return Promise.reject('SDK not ready');
+  }
 }
 
 document.getElementById('btnShuffle').onclick=async()=>{
@@ -288,7 +361,7 @@ document.getElementById('btnShuffle').onclick=async()=>{
   }
   toast('Watch ad for +5 shuffles...');
   try{
-    await show_11148292();
+    await safeShowAd();
     shuffles=5;
     shuffleBoard();
     updateHUD();
@@ -307,7 +380,7 @@ function shuffleBoard(){
 
 async function watchAdForDouble(){
   try{
-    await show_11148292();
+    await safeShowAd();
     points*=2;
     document.getElementById('endPoints').textContent=points;
     toast('Points doubled! x2');
@@ -319,7 +392,7 @@ async function watchAdForDouble(){
 async function showAdThenNext(){
   toast('Watch ad for next level...');
   try{
-    await show_11148292();
+    await safeShowAd();
     document.getElementById('endModal').classList.remove('show');
     init(true);
   } catch(e){
@@ -327,7 +400,63 @@ async function showAdThenNext(){
   }
 }
 
-document.getElementById('btnNew').onclick=()=>init(false);
+// BOTTOM NAV
+function showTab(tab){
+  document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active'));
+  event.target.closest('.navBtn').classList.add('active');
+
+  if(tab==='store'){
+    document.getElementById('starBalance').textContent=stars;
+    document.getElementById('storeModal').classList.add('show');
+  } else if(tab==='duel'){
+    toast('Duel mode coming in V5.1');
+  } else if(tab==='leaderboard'){
+    toast('Leaderboard coming in V5.1');
+  } else {
+    document.getElementById('storeModal').classList.remove('show');
+  }
+}
+
+function closeStore(){
+  document.getElementById('storeModal').classList.remove('show');
+  document.querySelectorAll('.navBtn')[0].classList.add('active');
+}
+
+// STORE - DISABLED DURING 72H SILENT PERIOD
+async function buyItem(item, price){
+  // During 72h observation: disable real payment
+  toast('Store opens after 72h observation period');
+  return;
+
+  // AFTER 72H: Use this code with backend
+  /*
+  try{
+    const response = await fetch('/api/create-invoice', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ item, price, user_id: Telegram.WebApp.initDataUnsafe.user?.id })
+    });
+    const data = await response.json();
+    Telegram.WebApp.openInvoice(data.url, (status) => {
+      if(status === 'paid'){
+        stars -= price;
+        inventory[item]++;
+        toast(item+' bought!');
+        document.getElementById('starBalance').textContent=stars;
+        updateHUD();
+      }
+    });
+  } catch(e){
+    toast('Payment error');
+  }
+  */
+}
+
+function openProfile(){
+  toast('Profile settings coming soon');
+}
+
+document.getElementById('btnDuel').onclick=()=>showTab('duel');
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
