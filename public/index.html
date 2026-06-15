@@ -10,7 +10,7 @@
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
 .wrap{height:100vh; display:flex; flex-direction:column}
   header{display:flex; justify-content:space-between; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
-.logo{width:36px; height:36px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #4ade80}
+.logo{width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid #4ade80}
 .hud{display:flex; gap:6px; font-size:12px}
 .pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
 .goal{font-size:12px; color:#f59e0b; text-align:center; padding:6px; display:flex; gap:12px; justify-content:center}
@@ -19,11 +19,12 @@
 .board{display:grid; grid-template-columns:repeat(8,1fr); gap:3px; width:min(96vw,500px); height:min(96vw,500px); max-height:60vh; background:#0b1222; padding:6px; border-radius:16px; border:1px solid #1f2937}
 .tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
 .tile:active{transform:scale(.95)}
-/* WHOLE BLOCK COLORS - not just text */
-.suit-d{background:#ffffff; color:#0a0f1e} /* Diamond White block */
-.suit-s{background:#2563eb; color:#fff} /* Spades Blue block */
-.suit-h{background:#dc2626; color:#fff} /* Hearts Red block */
-.suit-c{background:#16a34a; color:#fff} /* Clovers Green block */
+.tile.empty{background:#0b1222; border:1px dashed #1f2937} /* Empty slot during collapse */
+/* WHOLE BLOCK COLORS */
+.suit-d{background:#ffffff; color:#0a0f1e}
+.suit-s{background:#2563eb; color:#fff}
+.suit-h{background:#dc2626; color:#fff}
+.suit-c{background:#16a34a; color:#fff}
 .footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222}
   button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
@@ -41,7 +42,7 @@
 <div class="wrap">
   <header>
     <div style="display:flex; align-items:center; gap:8px">
-      <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen">
+      <img class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen">
       <div><div style="font-weight:700">Sstephen</div><div style="font-size:11px">Rank: <span id="rank">Bronze</span></div></div>
     </div>
     <div class="hud">
@@ -98,7 +99,7 @@ function getRank(score){
 }
 
 function init(newLevel=false){
-  lock=false; // FORCE UNLOCK ON NEW GAME
+  lock=false;
   if(newLevel) level++;
   points=0; moves=0; shuffles=10; goals={diamond:0, target:level<=3?20:100};
   timeLeft = level<=3?120:60;
@@ -126,10 +127,15 @@ function render(){
   board.innerHTML='';
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
     const tile=document.createElement('div');
-    tile.className='tile '+SUITS[grid[r][c]].c;
+    // ALWAYS CREATE 64 TILES - even if -1
+    if(grid[r][c]==-1){
+      tile.className='tile empty';
+      tile.textContent='';
+    } else {
+      tile.className='tile '+SUITS[grid[r][c]].c;
+      tile.textContent=SUITS[grid[r][c]].s;
+    }
     tile.dataset.r=r; tile.dataset.c=c;
-    tile.textContent=SUITS[grid[r][c]].s;
-    // ADD BOTH MOUSE AND TOUCH EVENTS
     tile.onmousedown = dragStartHandler;
     tile.onmouseup = dragEndHandler;
     tile.ontouchstart = dragStartHandler;
@@ -142,7 +148,7 @@ function dragStartHandler(e){
   e.preventDefault();
   if(lock) return;
   const t=e.target.closest('.tile');
-  if(!t) return;
+  if(!t || t.classList.contains('empty')) return; // Can't drag empty
   const x = e.touches?e.touches[0].clientX:e.clientX;
   const y = e.touches?e.touches[0].clientY:e.clientY;
   dragStart={r:+t.dataset.r, c:+t.dataset.c, x:x, y:y};
@@ -150,7 +156,7 @@ function dragStartHandler(e){
 
 function dragEndHandler(e){
   e.preventDefault();
-  if(!dragStart || lock) { lock=false; dragStart=null; return } // FORCE UNLOCK
+  if(!dragStart) return;
   const x = e.changedTouches?e.changedTouches[0].clientX:e.clientX;
   const y = e.changedTouches?e.changedTouches[0].clientY:e.clientY;
   const dx=x-dragStart.x, dy=y-dragStart.y;
@@ -163,16 +169,18 @@ function dragEndHandler(e){
 }
 
 function trySwap(r1,c1,r2,c2){
+  if(lock) return; // Prevent double swap
   if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) { lock=false; return }
+  lock=true; // Lock immediately
   swap(r1,c1,r2,c2);
   const matches=findMatches();
   if(matches.length===0){
     swap(r1,c1,r2,c2);
     toast('No match');
-    lock=false; // UNLOCK HERE
+    lock=false; // Unlock if no match
     return
   }
-  lock=true; moves++;
+  moves++;
   resolve(matches);
   updateHUD();
   if(goals.diamond>=goals.target) endRound(true);
@@ -204,7 +212,7 @@ async function resolve(matches){
     collapse(); fill(); render(); await sleep(120);
     matches=findMatches(); combo++;
   }
-  lock=false; // UNLOCK AFTER ALL RESOLVES
+  lock=false; // CRITICAL: unlock after everything done
 }
 
 function collapse(){
