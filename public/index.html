@@ -3,85 +3,121 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Rael Kertia Arena V4.6</title>
+<title>Rael Kertia Arena V4.8</title>
 <style>
-  :root{--bg:#0a0f1e; --panel:#121a2b; --text:#e5e7eb; --muted:#9aa3b2; --gold:#f59e0b}
+  :root{--bg:#0a0f1e; --text:#e5e7eb; --gold:#f59e0b}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
-.wrap{display:flex; flex-direction:column; height:100vh}
+.wrap{height:100vh; display:flex; flex-direction:column}
   header{display:flex; justify-content:space-between; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
-.brand{display:flex; align-items:center; gap:8px}
-.logo{width:32px; height:32px; border-radius:50%; background:radial-gradient(circle,#4ade80,#065f46); cursor:pointer; object-fit:cover}
+.logo{width:36px; height:36px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #4ade80}
 .hud{display:flex; gap:6px; font-size:12px}
 .pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
-.username{font-size:11px; color:var(--muted)}
-.goal{font-size:11px; color:var(--gold); text-align:center; padding:4px}
-.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px}
+.goal{font-size:12px; color:var(--gold); text-align:center; padding:6px; display:flex; gap:12px; justify-content:center}
+.timer{color:#ef4444; font-weight:700}
+.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px; position:relative}
 .board{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; width:min(94vw,500px); height:min(94vw,500px); background:#0b1222; padding:8px; border-radius:16px; border:1px solid #1f2937}
-.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; background:#0f172a; border:1px solid #1f2937; touch-action:none; cursor:pointer}
-.footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222; flex-wrap:wrap}
+.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:32px; background:#0f172a; border:1px solid #1f2937; touch-action:none; cursor:pointer}
+.suit-d{color:#3b82f6}.suit-s{color:#22c55e}.suit-c{color:#ef4444}.suit-h{color:#ec4899}
+.footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222}
   button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
 .toast{position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#0f172a; border:1px solid #1f2937; padding:8px 12px; border-radius:999px; opacity:0; transition:.2s; z-index:999}
 .toast.show{opacity:1}
+.scorePop{position:absolute; color:#4ade80; font-weight:800; font-size:18px; animation:pop 600ms ease-out forwards; pointer-events:none}
+@keyframes pop{0%{opacity:0; transform:translateY(0)} 30%{opacity:1} 100%{opacity:0; transform:translateY(-30px)}}
+.modal{position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:100}
+.modal.show{display:flex}
+.card{width:90vw; max-width:380px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:20px; text-align:center}
+.stars{font-size:32px; margin:10px 0}
+.btn-row{display:flex; gap:8px; margin-top:12px}
+.btn-row button{flex:1}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">
+    <div style="display:flex; align-items:center; gap:8px">
       <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen" onclick="openProfile()">
-      <div>
-        <div style="font-weight:700">Sstephen</div>
-        <div class="username">Level <span id="level">1</span></div>
-      </div>
+      <div><div style="font-weight:700">Sstephen</div><div style="font-size:11px">Rank: <span id="rank">Bronze</span></div></div>
     </div>
     <div class="hud">
-      <div class="pill">⭐<span id="stars">0</span></div>
-      <div class="pill">💰<span id="coins">0</span></div>
+      <div class="pill">🏆<span id="points">0</span></div>
       <div class="pill">🔄<span id="shuffles">10</span></div>
-      <div class="pill">🎯<span id="moves">0</span>/<span id="moveLimit">25</span></div>
     </div>
   </header>
 
-  <div class="goal">Goal: Get 20♦ + 20♠ in 25 moves</div>
-
-  <div class="boardWrap">
-    <div id="board" class="board"></div>
+  <div class="goal" id="goalBar">
+    <span>0/20 ♦️</span><span class="timer" id="timer">2:00</span><span>Moves:0</span>
   </div>
 
+  <div class="boardWrap"><div id="board" class="board"></div></div>
+
   <div class="footer">
-    <button class="primary" id="btnShuffle">🔄 Shuffle (10💰)</button>
-    <button id="btnStore">🏪 Store</button>
+    <button class="primary" id="btnShuffle">🔄 Shuffle <span id="shuffleCount">(10)</span></button>
     <button id="btnDuel">⚔️ Duel</button>
-    <button id="btnReset">↺ New</button>
+    <button id="btnNew">↺ New</button>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
+<!-- END ROUND POPUP -->
+<div id="endModal" class="modal">
+  <div class="card">
+    <h2 id="endTitle">Round Complete!</h2>
+    <div class="stars" id="stars">⭐</div>
+    <div style="font-size:18px">Points: <span id="endPoints">0</span></div>
+    <div style="font-size:12px; color:#9aa3b2" id="endTime">Time: 1:23</div>
+    <div class="btn-row">
+      <button class="primary" onclick="watchAdForDouble()">📺 Double Points</button>
+      <button onclick="shareResult()">📤 Share</button>
+    </div>
+    <button onclick="nextLevel()" style="width:100%; margin-top:8px">Next Level ▶️</button>
+  </div>
+</div>
+
+<audio id="sndMatch" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+
 <script>
 const SIZE=8;
-const SUITS=['♦','♠','♣','♥'];
-let grid=[], selected=null, dragStart=null;
-let coins=0, stars=0, shuffles=10, moves=0, moveLimit=25;
-let level=1, lock=false;
+const SUITS=[{s:'♦️',c:'suit-d',name:'diamond'},{s:'♠️',c:'suit-s',name:'spade'},{s:'♣️',c:'suit-c',name:'clover'},{s:'♥️',c:'suit-h',name:'heart'}];
+let grid=[], dragStart=null, lock=false;
+let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
+let goals={diamond:0, target:20}, level=1, difficulty='easy';
+let highScore=parseInt(localStorage.getItem('high')||'0');
 
-// INIT - FREE 10 SHUFFLES
-function init(){
-  shuffles=10; moves=0;
+// RANK
+function getRank(score){
+  if(score>=100000) return 'Mythic '+Math.max(1,1000-Math.floor(score/100));
+  if(score>=50000) return 'Mythic';
+  if(score>=25000) return 'Legend';
+  if(score>=10000) return 'Grandmaster';
+  if(score>=5000) return 'Master';
+  if(score>=1000) return 'Elite';
+  if(score>=500) return 'Gold';
+  if(score>=100) return 'Silver';
+  return 'Bronze';
+}
+
+function init(newLevel=false){
+  if(newLevel) level++;
+  points=0; moves=0; shuffles=10; goals={diamond:0, target:level<=3?20:100};
+  difficulty = level<=3?'easy':'hard';
+  timeLeft = difficulty==='easy'?120:60;
+
   grid=Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>Math.floor(Math.random()*4)));
   removeMatches();
   render();
   updateHUD();
-  updateGoal();
+  startTimer();
 }
 
 function removeMatches(){
-  let changed=true, attempts=0;
-  while(changed && attempts<100){
-    changed=false; attempts++;
+  let changed=true, tries=0;
+  while(changed && tries<50){
+    changed=false; tries++;
     for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
       if(c>=2 && grid[r][c]==grid[r][c-1] && grid[r][c]==grid[r][c-2]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
       if(r>=2 && grid[r][c]==grid[r-1][c] && grid[r][c]==grid[r-2][c]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
@@ -94,9 +130,9 @@ function render(){
   board.innerHTML='';
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
     const tile=document.createElement('div');
-    tile.className='tile';
+    tile.className='tile '+SUITS[grid[r][c]].c;
     tile.dataset.r=r; tile.dataset.c=c;
-    tile.textContent=SUITS[grid[r][c]];
+    tile.textContent=SUITS[grid[r][c]].s;
     tile.addEventListener('touchstart', dragStartHandler);
     tile.addEventListener('touchend', dragEndHandler);
     tile.addEventListener('mousedown', dragStartHandler);
@@ -105,7 +141,7 @@ function render(){
   }
 }
 
-// SWIPE LOGIC
+// SWIPE
 function dragStartHandler(e){
   if(lock) return;
   const t=e.target.closest('.tile');
@@ -118,11 +154,9 @@ function dragEndHandler(e){
   const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
   const dx=x-dragStart.x, dy=y-dragStart.y;
   if(Math.abs(dx)<25 && Math.abs(dy)<25){ dragStart=null; return }
-
   let r2=dragStart.r, c2=dragStart.c;
   if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
   if(r2<0||r2>=SIZE||c2<0||c2>=SIZE){ dragStart=null; return }
-
   trySwap(dragStart.r, dragStart.c, r2, c2);
   dragStart=null;
 }
@@ -135,10 +169,9 @@ function trySwap(r1,c1,r2,c2){
   lock=true; moves++;
   resolve(matches);
   updateHUD();
-  if(moves>=moveLimit) toast('Out of moves!');
+  if(goals.diamond>=goals.target) endRound(true);
 }
 
-// MATCH LOGIC
 function swap(r1,c1,r2,c2){ const t=grid[r1][c1]; grid[r1][c1]=grid[r2][c2]; grid[r2][c2]=t }
 
 function findMatches(){
@@ -151,8 +184,16 @@ function findMatches(){
 async function resolve(matches){
   let combo=1;
   while(matches.length>0){
-    score(matches.length*10*combo);
-    for(const[r,c] of matches) grid[r][c]=-1;
+    const pts=matches.length*10*combo;
+    points+=pts;
+    addPop(pts);
+    document.getElementById('sndMatch').play().catch(()=>{});
+
+    matches.forEach(([r,c])=>{
+      if(SUITS[grid[r][c]].name==='diamond') goals.diamond++;
+      grid[r][c]=-1;
+    });
+
     render(); await sleep(150);
     collapse(); fill(); render(); await sleep(150);
     matches=findMatches(); combo++;
@@ -164,10 +205,7 @@ function collapse(){
   for(let c=0;c<SIZE;c++){
     let write=SIZE-1;
     for(let r=SIZE-1;r>=0;r--){
-      if(grid[r][c]>=0){
-        grid[write][c]=grid[r][c];
-        write--;
-      }
+      if(grid[r][c]>=0){ grid[write][c]=grid[r][c]; write-- }
     }
     for(let r=write;r>=0;r--) grid[r][c]=-1;
   }
@@ -179,32 +217,80 @@ function fill(){
       if(grid[r][c]==-1) grid[r][c]=Math.floor(Math.random()*4);
 }
 
-function score(v){ coins+=v }
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function addPop(v){
+  const pop=document.createElement('div');
+  pop.className='scorePop';
+  pop.textContent='+'+v;
+  document.querySelector('.boardWrap').appendChild(pop);
+  setTimeout(()=>pop.remove(), 600);
+}
 
 function updateHUD(){
-  document.getElementById('coins').textContent=coins;
-  document.getElementById('stars').textContent=stars;
+  document.getElementById('points').textContent=points;
   document.getElementById('shuffles').textContent=shuffles;
-  document.getElementById('moves').textContent=moves;
-  document.getElementById('level').textContent=level;
+  document.getElementById('shuffleCount').textContent='('+shuffles+')';
+  document.getElementById('rank').textContent=getRank(points);
+  const mins=Math.floor(timeLeft/60), secs=timeLeft%60;
+  document.getElementById('timer').textContent=`${mins}:${secs.toString().padStart(2,'0')}`;
+  document.getElementById('goalBar').innerHTML=`
+    <span>${goals.diamond}/${goals.target} ♦️</span>
+    <span class="timer" id="timer">${mins}:${secs.toString().padStart(2,'0')}</span>
+    <span>Moves:${moves}</span>
+  `;
 }
 
-function updateGoal(){
-  const goals={1:['♦','♠',20,20,25], 2:['♣','♥',15,15,20]};
-  const g=goals[level]||goals[1];
-  document.querySelector('.goal').textContent=`Goal: Get ${g[2]}${g[0]} + ${g[3]}${g[1]} in ${g[4]} moves`;
-  document.getElementById('moveLimit').textContent=g[4];
-  moveLimit=g[4];
+function startTimer(){
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    timeLeft--;
+    updateHUD();
+    if(timeLeft<=0){
+      clearInterval(timer);
+      endRound(false);
+    }
+  },1000);
 }
 
-// SHUFFLE WITH AD
+function endRound(win){
+  clearInterval(timer);
+  lock=true;
+  const stars = win? (timeLeft>60?3: timeLeft>30?2:1) : 0;
+  const mins=Math.floor((difficulty==='easy'?120:60 - timeLeft)/60);
+  const secs=(difficulty==='easy'?120:60 - timeLeft)%60;
+
+  document.getElementById('endTitle').textContent= win?'🎉 Round Complete!':'💀 Time Up!';
+  document.getElementById('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('endPoints').textContent=points;
+  document.getElementById('endTime').textContent=`Time: ${mins}:${secs.toString().padStart(2,'0')} | Level ${level}`;
+  document.getElementById('endModal').classList.add('show');
+
+  if(points>highScore){
+    highScore=points;
+    localStorage.setItem('high', highScore);
+  }
+}
+
+// SHUFFLE WITH ADS
 document.getElementById('btnShuffle').onclick=async()=>{
-  if(shuffles>0){ shuffles--; shuffleBoard(); updateHUD(); return }
-  if(coins>=10){ coins-=10; shuffleBoard(); updateHUD(); return }
-  toast('Watching ad...');
-  try{ await show_11148292(); shuffles++; updateHUD(); toast('+1 shuffle') }
-  catch(e){ shuffles++; updateHUD(); toast('No ad. Free shuffle given') }
+  if(shuffles>0){
+    shuffles--;
+    shuffleBoard();
+    updateHUD();
+    return;
+  }
+
+  // No shuffles left = show ad
+  toast('Watch ad for +5 shuffles...');
+  try{
+    await show_11148292(); // MONETAG AD
+    shuffles=5;
+    shuffleBoard();
+    updateHUD();
+    toast('+5 shuffles added');
+  } catch(e){
+    toast('Ad not available. Try again');
+    console.log('Monetag error:', e);
+  }
 }
 
 function shuffleBoard(){
@@ -214,29 +300,45 @@ function shuffleBoard(){
   render();
 }
 
-// BUTTONS
-document.getElementById('btnReset').onclick=()=>{ level++; init() }
-document.getElementById('btnStore').onclick=()=>toast('Store coming V4.7')
-document.getElementById('btnDuel').onclick=()=>toast('Duel mode coming V4.7')
-
-// PROFILE - YOUR NAME + UPLOAD
-function openProfile(){
-  const name=prompt('Edit name:', localStorage.getItem('playerName')||'Sstephen');
-  if(name) { localStorage.setItem('playerName', name); document.querySelector('.brand div').textContent=name }
-
-  const input=document.createElement('input'); input.type='file'; input.accept='image/*';
-  input.onchange=e=>{ const f=e.target.files[0]; if(f){ const r=new FileReader(); r.onload=ev=>{document.getElementById('avatar').src=ev.target.result; localStorage.setItem('avatar',ev.target.result)}; r.readAsDataURL(f) }};
-  input.click();
+// DOUBLE POINTS AD
+async function watchAdForDouble(){
+  try{
+    await show_11148292();
+    points*=2;
+    document.getElementById('endPoints').textContent=points;
+    toast('Points doubled! x2');
+  } catch(e){
+    toast('Ad failed. Points not doubled');
+  }
 }
 
-// LOAD SAVED DATA
-const savedName=localStorage.getItem('playerName');
-if(savedName) document.querySelector('.brand div').textContent=savedName;
-const savedAvatar=localStorage.getItem('avatar');
-if(savedAvatar) document.getElementById('avatar').src=savedAvatar;
+// SHARE RESULT - WORDLE STYLE
+function shareResult(){
+  const stars=document.getElementById('stars').textContent;
+  const time=document.getElementById('endTime').textContent;
+  const text=`Rael Kertia Arena #${level} ${stars}\n${goals.diamond}/${goals.target} ♦️\n${points} pts | ${time}\nhttps://t.me/RaelKertiaArenaBot`;
 
+  if(navigator.share){
+    navigator.share({title:'Rael Kertia Arena', text});
+  } else {
+    navigator.clipboard.writeText(text);
+    toast('Result copied! Paste anywhere');
+  }
+}
+
+function nextLevel(){
+  document.getElementById('endModal').classList.remove('show');
+  init(true);
+}
+
+document.getElementById('btnNew').onclick=()=>init(false);
+document.getElementById('btnDuel').onclick=()=>toast('Duel mode coming V4.9');
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// INIT
 init();
-console.log('Game loaded. Grid:', grid);
 </script>
 </body>
 </html>
