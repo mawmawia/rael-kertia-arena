@@ -2,467 +2,280 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>Rael Kertia Arena - Match 3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Rael Kertia Arena V4.5</title>
 <style>
-  :root{
-    --bg:#0b1020; --panel:#121a2b; --accent:#4ade80; --danger:#ef4444;
-    --gold:#f59e0b; --text:#e5e7eb; --muted:#9aa3b2;
-    --g1:#22c55e; --g2:#3b82f6; --g3:#a855f7; --g4:#f97316; --g5:#eab308;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent}
-  html,body{height:100%; margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu}
- .wrap{display:flex; flex-direction:column; height:100%}
-  header{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    padding:10px 12px; background:linear-gradient(180deg, #0f172a, #0b1222);
-    border-bottom:1px solid #1f2937; position:sticky; top:0; z-index:10
-  }
- .brand{display:flex; align-items:center; gap:10px}
- .logo{width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #22c55e, #065f46)}
- .title{font-weight:700}
- .hud{display:flex; gap:8px; flex-wrap:wrap}
- .pill{padding:6px 10px; border-radius:999px; background:#0f172a; border:1px solid #1f2937; font-size:12px; display:flex; gap:6px; align-items:center}
- .pill b{color:var(--text)}
- .pill.v{color:var(--accent)}
- .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:12px}
- .board{
-    display:grid; grid-template-columns: repeat(8, 1fr);
-    gap:6px; width:min(92vw, 560px); aspect-ratio:1/1;
-    background:linear-gradient(180deg,#0a1224,#0b1224); padding:10px; border-radius:16px;
-    border:1px solid #1f2937; box-shadow:0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.03)
-  }
- .tile{
-    position:relative; border-radius:12px; cursor:pointer; user-select:none;
-    display:flex; align-items:center; justify-content:center; font-size:24px;
-    background:linear-gradient(180deg,#0f172a,#0b1222); border:1px solid #1f2937;
-    transition: transform.15s ease, filter.15s ease, box-shadow.15s ease;
-  }
- .tile:active{transform:scale(.97)}
- .tile.selected{outline:2px solid var(--gold); box-shadow:0 0 0 3px rgba(245,158,11,.25)}
- .gem{width:70%; height:70%; border-radius:50%; box-shadow:inset 0 8px 18px rgba(255,255,255,.25), 0 6px 14px rgba(0,0,0,.35)}
- .g1{background:radial-gradient(circle at 30% 30%, #4ade80, #15803d)}
- .g2{background:radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8)}
- .g3{background:radial-gradient(circle at 30% 30%, #c084fc, #7e22ce)}
- .g4{background:radial-gradient(circle at 30% 30%, #fb923c, #c2410c)}
- .g5{background:radial-gradient(circle at 30% 30%, #fde047, #b45309)}
- .footer{
-    display:flex; gap:8px; padding:10px 12px; border-top:1px solid #1f2937; background:#0b1222; flex-wrap:wrap
-  }
-  button{
-    appearance:none; border:none; border-radius:12px; padding:10px 14px; font-weight:700;
-    background:#111827; color:var(--text); cursor:pointer; border:1px solid #1f2937
-  }
+  :root{--bg:#0a0f1e; --panel:#121a2b; --text:#e5e7eb; --muted:#9aa3b2; --gold:#f59e0b}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
+ .wrap{display:flex; flex-direction:column; height:100vh}
+  header{display:flex; justify-content:space-between; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
+ .brand{display:flex; align-items:center; gap:8px}
+ .logo{width:32px; height:32px; border-radius:50%; background:radial-gradient(circle,#4ade80,#065f46); cursor:pointer}
+ .hud{display:flex; gap:6px; font-size:12px}
+ .pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
+ .goal{font-size:11px; color:var(--gold); text-align:center; padding:4px}
+ .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px}
+ .board{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; width:min(94vw,500px); aspect-ratio:1/1; background:#0b1222; padding:8px; border-radius:16px; border:1px solid #1f2937}
+ .tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; background:#0f172a; border:1px solid #1f2937; touch-action:none}
+ .tile.drag-over{outline:2px solid var(--gold)}
+ .footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222; flex-wrap:wrap}
+  button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
-  button.warn{background:linear-gradient(180deg,#f59e0b,#b45309)}
-  button.ghost{background:transparent}
- .toast{
-    position:fixed; left:50%; bottom:84px; transform:translateX(-50%); background:#0f172a;
-    border:1px solid #1f2937; color:var(--text); padding:10px 14px; border-radius:999px;
-    box-shadow:0 10px 30px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity.2s
-  }
+ .toast{position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#0f172a; border:1px solid #1f2937; padding:8px 12px; border-radius:999px; opacity:0; transition:.2s}
  .toast.show{opacity:1}
- .row{display:flex; gap:8px; align-items:center}
- .small{font-size:12px; color:var(--muted)}
- .scoreUp{position:absolute; font-weight:800; color:var(--accent); animation:score 800ms ease-out forwards; pointer-events:none}
-  @keyframes score{0%{opacity:0; transform:translateY(0)} 20%{opacity:1} 100%{opacity:0; transform:translateY(-24px)}}
- .modal{
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index:50
-  }
- .modal.show{display:flex}
- .card{
-    width:min(92vw, 420px); background:#0b1222; border:1px solid #1f2937; border-radius:16px;
-    padding:16px; box-shadow:0 20px 60px rgba(0,0,0,.6)
-  }
- .card h3{margin:0 0 8px 0}
- .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
- .hint{font-size:12px; color:var(--muted); margin-top:6px}
+ .store{position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:100}
+ .store.show{display:flex}
+ .card{width:90vw; max-width:380px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:16px}
+ .skill-btn{display:flex; justify-content:space-between; padding:10px; margin:6px 0; background:#0f172a; border-radius:8px; cursor:pointer}
+ .skill-count{color:var(--gold)}
 </style>
-<!-- MONETAG SDK -->
-<script src='//libtl.com/sdk.js' data-zone='8655637' data-sdk='show_8655637'></script>
+<script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="brand">
-      <div class="logo"></div>
+      <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" onclick="openProfile()">
       <div>
-        <div class="title">Rael Kertia Arena</div>
-        <div class="small">Match-3 Arena</div>
+        <div style="font-weight:700">Rael Kertia Arena</div>
+        <div style="font-size:11px; color:var(--muted)">Level <span id="level">1</span></div>
       </div>
     </div>
     <div class="hud">
-      <div class="pill">Score <b id="score" class="v">0</b></div>
-      <div class="pill">Coins <b id="coins" class="v">0</b></div>
-      <div class="pill">Shuffles <b id="shuffles" class="v">3</b></div>
-      <div class="pill">Moves <b id="moves" class="v">0</b></div>
+      <div class="pill">⭐<span id="stars">0</span></div>
+      <div class="pill">💰<span id="coins">0</span></div>
+      <div class="pill">🔄<span id="shuffles">10</span></div>
+      <div class="pill">🎯<span id="moves">0</span>/<span id="moveLimit">25</span></div>
     </div>
   </header>
+
+  <div class="goal">Goal: Get 20♦ + 20♠ in 25 moves</div>
 
   <div class="boardWrap">
     <div id="board" class="board"></div>
   </div>
 
   <div class="footer">
-    <button class="primary" id="btnShuffle">🔄 Shuffle <span class="small">(10 coins)</span></button>
-    <button id="btnHint">💡 Hint</button>
-    <button class="ghost" id="btnReset">↺ Reset</button>
-    <button class="warn" id="btnSell">💰 Sell +100 coins</button>
-    <div class="row" style="margin-left:auto">
-      <div class="small">Goal: Match 3+ gems. Combos = more coins.</div>
-    </div>
+    <button class="primary" id="btnShuffle">🔄 Shuffle (10💰)</button>
+    <button id="btnStore">🏪 Store</button>
+    <button id="btnDuel">⚔️ Duel</button>
+    <button id="btnReset">↺ New</button>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
-<div id="modal" class="modal">
+<div id="storeModal" class="store">
   <div class="card">
-    <h3>🎉 Level Complete!</h3>
-    <div class="small">You reached 10,000 points. Keep playing for higher scores.</div>
-    <div class="grid2" style="margin-top:12px">
-      <button class="primary" id="btnContinue">Continue</button>
-      <button class="ghost" id="btnRestart">Restart</button>
-    </div>
+    <h3>🏪 Power-Ups Store</h3>
+    <div class="small">Use skills or buy with Stars ⭐</div>
+    <div class="skill-btn" onclick="useSkill('bomb')">💣 Bomb <span class="skill-count" id="bombCount">0</span></div>
+    <div class="skill-btn" onclick="useSkill('laser')">⚡ Laser <span class="skill-count" id="laserCount">0</span></div>
+    <div class="skill-btn" onclick="useSkill('ufo')">🛸 UFO <span class="skill-count" id="ufoCount">0</span></div>
+    <div class="skill-btn" onclick="useSkill('sickle')">🌙 Sickle <span class="skill-count" id="sickleCount">0</span></div>
+    <hr style="border-color:#1f2937; margin:12px 0">
+    <div class="skill-btn" onclick="buySkill('bomb',50)">Buy Bomb - 50⭐</div>
+    <div class="skill-btn" onclick="buySkill('laser',40)">Buy Laser - 40⭐</div>
+    <div class="skill-btn" onclick="buySkill('ufo',80)">Buy UFO - 80⭐</div>
+    <button onclick="closeStore()" style="width:100%; margin-top:10px">Close</button>
   </div>
 </div>
 
 <script>
-const boardEl = document.getElementById('board');
-const scoreEl = document.getElementById('score');
-const coinsEl = document.getElementById('coins');
-const shufflesEl = document.getElementById('shuffles');
-const movesEl = document.getElementById('moves');
-const toastEl = document.getElementById('toast');
-const modalEl = document.getElementById('modal');
+const SIZE=8;
+const SUITS=['♦','♠','♣','♥']; // Diamond, Spades, Clovers, Hearts
+let grid=[], selected=null, dragStart=null;
+let coins=0, stars=0, shuffles=10, moves=0, moveLimit=25;
+let level=1, skills={bomb:0, laser:0, ufo:0, sickle:0};
+let lock=false;
 
-const SIZE = 8;
-const COLORS = 5;
-let grid = [];
-let selected = null;
-let score = 0;
-let coins = 0;
-let shuffles = 3;
-let moves = 0;
-let lock = false;
-let levelTarget = 10000;
-
-function randColor(){ return 1 + Math.floor(Math.random()*COLORS) }
-function gemClass(c){ return 'g' + c }
-
+// INIT - FREE 10 SHUFFLES EVERY LEVEL
 function init(){
-  grid = Array.from({length:SIZE}, () => Array.from({length:SIZE}, () => randColor()));
-  removeInitialMatches();
+  shuffles=10; moves=0;
+  grid=Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>Math.floor(Math.random()*4)));
+  removeMatches();
   render();
   updateHUD();
+  updateGoal();
 }
 
-function removeInitialMatches(){
-  let changed = true;
+function removeMatches(){
+  let changed=true;
   while(changed){
-    changed = false;
-    for(let r=0;r<SIZE;r++){
-      for(let c=0;c<SIZE;c++){
-        const v = grid[r][c];
-        if(c>=2 && grid[r][c-1]===v && grid[r][c-2]===v){
-          grid[r][c] = randColor(); changed = true;
-        }
-        if(r>=2 && grid[r-1][c]===v && grid[r-2][c]===v){
-          grid[r][c] = randColor(); changed = true;
-        }
-      }
+    changed=false;
+    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+      if(c>=2 && grid[r][c]==grid[r][c-1] && grid[r][c]==grid[r][c-2]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
+      if(r>=2 && grid[r][c]==grid[r-1][c] && grid[r][c]==grid[r-2][c]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
     }
   }
 }
 
 function render(){
-  boardEl.innerHTML = '';
-  for(let r=0;r<SIZE;r++){
-    for(let c=0;c<SIZE;c++){
-      const tile = document.createElement('div');
-      tile.className = 'tile' + (selected && selected.r===r && selected.c===c? ' selected' : '');
-      tile.dataset.r = r; tile.dataset.c = c;
-      const gem = document.createElement('div');
-      gem.className = 'gem ' + gemClass(grid[r][c]);
-      tile.appendChild(gem);
-      tile.addEventListener('click', onTileClick);
-      boardEl.appendChild(tile);
-    }
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+    const tile=document.createElement('div');
+    tile.className='tile';
+    tile.dataset.r=r; tile.dataset.c=c;
+    tile.textContent=SUITS[grid[r][c]];
+    tile.addEventListener('touchstart', dragStartHandler);
+    tile.addEventListener('touchmove', dragMoveHandler);
+    tile.addEventListener('touchend', dragEndHandler);
+    tile.addEventListener('mousedown', dragStartHandler);
+    board.appendChild(tile);
   }
 }
 
-function onTileClick(e){
+// SWIPE LIKE CANDY CRUSH
+function dragStartHandler(e){
   if(lock) return;
-  const r = +e.currentTarget.dataset.r;
-  const c = +e.currentTarget.dataset.c;
-  if(!selected){
-    selected = {r,c};
-    render();
-    return;
-  }
-  if(selected.r===r && selected.c===c){
-    selected = null;
-    render();
-    return;
-  }
-  if(!isAdjacent(selected.r, selected.c, r, c)){
-    selected = {r,c};
-    render();
-    return;
-  }
-  swap(selected.r, selected.c, r, c);
-  const matches = findAllMatches();
-  if(matches.length===0){
-    swap(selected.r, selected.c, r, c);
-    selected = null;
-    render();
-    toast('No match. Try again!');
-    return;
-  }
-  lock = true;
-  moves++;
-  resolveMatches(matches);
-  selected = null;
-  render();
-  updateHUD();
-  if(score >= levelTarget){
-    modalEl.classList.add('show');
-  }
+  const t=e.target.closest('.tile');
+  dragStart={r:+t.dataset.r, c:+t.dataset.c, x:e.touches?e.touches[0].clientX:e.clientX, y:e.touches?e.touches[0].clientY:e.clientY};
 }
 
-function isAdjacent(r1,c1,r2,c2){
-  return (Math.abs(r1-r2)===1 && c1===c2) || (Math.abs(c1-c2)===1 && r1===r2);
+function dragEndHandler(e){
+  if(!dragStart || lock) return;
+  const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+  const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+  const dx=x-dragStart.x, dy=y-dragStart.y;
+  if(Math.abs(dx)<30 && Math.abs(dy)<30) return; // no swipe
+
+  let r2=dragStart.r, c2=dragStart.c;
+  if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
+  if(r2<0||r2>=SIZE||c2<0||c2>=SIZE) return;
+
+  trySwap(dragStart.r, dragStart.c, r2, c2);
+  dragStart=null;
 }
 
-function swap(r1,c1,r2,c2){
-  const tmp = grid[r1][c1];
-  grid[r1][c1] = grid[r2][c2];
-  grid[r2][c2] = tmp;
+function trySwap(r1,c1,r2,c2){
+  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
+  swap(r1,c1,r2,c2);
+  const matches=findMatches();
+  if(matches.length===0){ swap(r1,c1,r2,c2); toast('No match'); return }
+  lock=true; moves++; resolve(matches);
+  updateHUD(); checkWin();
 }
 
-function findAllMatches(){
-  const matched = new Set();
-  for(let r=0;r<SIZE;r++){
-    let count=1;
-    for(let c=1;c<SIZE;c++){
-      if(grid[r][c]===grid[r][c-1]) count++;
-      else{
-        if(count>=3){
-          for(let k=c-count;k<c;k++) matched.add(r+','+k);
-        }
-        count=1;
-      }
-    }
-    if(count>=3){
-      for(let k=SIZE-count;k<SIZE;k++) matched.add(r+','+k);
-    }
+// MATCH LOGIC
+function swap(r1,c1,r2,c2){ const t=grid[r1][c1]; grid[r1][c1]=grid[r2][c2]; grid[r2][c2]=t }
+function findMatches(){ const m=new Set();
+  for(let r=0;r<SIZE;r++){let c=0;while(c<SIZE){let s=c;while(c<SIZE&&grid[r][c]==grid[r][s])c++; if(c-s>=3)for(let k=s;k<c;k++)m.add(r+','+k)}}
+  for(let c=0;c<SIZE;c++){let r=0;while(r<SIZE){let s=r;while(r<SIZE&&grid[r][c]==grid[s][c])r++; if(r-s>=3)for(let k=s;k<r;k++)m.add(k+','+c)}}
+  return Array.from(m).map(s=>s.split(',').map(Number))
+}
+
+async function resolve(matches){
+  let combo=1;
+  while(matches.length>0){
+    score(matches.length*10*combo);
+    for(const[r,c] of matches) grid[r][c]=-1;
+    render(); await sleep(200);
+    collapse(); fill(); render(); await sleep(200);
+    matches=findMatches(); combo++;
   }
-  for(let c=0;c<SIZE;c++){
-    let count=1;
-    for(let r=1;r<SIZE;r++){
-      if(grid[r][c]===grid[r-1][c]) count++;
-      else{
-        if(count>=3){
-          for(let k=r-count;k<r;k++) matched.add(k+','+c);
-        }
-        count=1;
-      }
-    }
-    if(count>=3){
-      for(let k=SIZE-count;k<SIZE;k++) matched.add(k+','+c);
-    }
-  }
-  return Array.from(matched).map(s => s.split(',').map(Number));
+  lock=false;
 }
 
-async function resolveMatches(matches){
-  const unique = new Set(matches.map(([r,c]) => r+','+c));
-  let combo = 1;
-  while(unique.size>0){
-    for(const key of unique){
-      const [r,c] = key.split(',').map(Number);
-      const tile = boardEl.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
-      if(tile){
-        const up = document.createElement('div');
-        up.className = 'scoreUp';
-        up.textContent = '+' + (10*combo);
-        tile.appendChild(up);
-        setTimeout(()=>up.remove(), 800);
-      }
-    }
-    score += unique.size * 10 * combo;
-    coins += unique.size * combo;
-    for(const key of unique){
-      const [r,c] = key.split(',').map(Number);
-      grid[r][c] = 0;
-    }
-    render();
-    await sleep(200);
-    collapse();
-    render();
-    await sleep(200);
-    fill();
-    render();
-    await sleep(200);
-    const newMatches = findAllMatches();
-    unique.clear();
-    newMatches.forEach(([r,c]) => unique.add(r+','+c));
-    combo++;
-  }
-  lock = false;
-}
-
-function collapse(){
-  for(let c=0;c<SIZE;c++){
-    let write = SIZE-1;
-    for(let r=SIZE-1;r>=0;r--){
-      if(grid[r][c]!==0){
-        grid[write][c] = grid[r][c];
-        if(write!==r) grid[r][c] = 0;
-        write--;
-      }
-    }
-  }
-}
-
-function fill(){
-  for(let r=0;r<SIZE;r++){
-    for(let c=0;c<SIZE;c++){
-      if(grid[r][c]===0) grid[r][c] = randColor();
-    }
-  }
-}
-
-function sleep(ms){ return new Promise(res => setTimeout(res, ms)) }
+function collapse(){ for(let c=0;c<SIZE;c++){let w=SIZE-1; for(let r=SIZE-1;r>=0;r--)if(grid[r][c]>=0){grid[w--][c]=grid[r][c]} while(w>=0)grid[w--][c]=-1} }
+function fill(){ for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]==-1)grid[r][c]=Math.floor(Math.random()*4) }
+function score(v){ coins+=v }
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 function updateHUD(){
-  scoreEl.textContent = score;
-  coinsEl.textContent = coins;
-  shufflesEl.textContent = shuffles;
-  movesEl.textContent = moves;
+  document.getElementById('coins').textContent=coins;
+  document.getElementById('stars').textContent=stars;
+  document.getElementById('shuffles').textContent=shuffles;
+  document.getElementById('moves').textContent=moves;
+  document.getElementById('level').textContent=level;
+  ['bomb','laser','ufo','sickle'].forEach(s=>document.getElementById(s+'Count').textContent=skills[s])
 }
 
-function toast(msg){
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(()=>toastEl.classList.remove('show'), 1400);
+function updateGoal(){
+  const goals={1:['♦','♠',20,20,25], 2:['♣','♥',15,15,20]};
+  const g=goals[level]||goals[1];
+  document.querySelector('.goal').textContent=`Goal: Get ${g[2]}${g[0]} + ${g[3]}${g[1]} in ${g[4]} moves`;
+  document.getElementById('moveLimit').textContent=g[4];
+  moveLimit=g[4];
 }
 
-// BUTTONS
-document.getElementById('btnShuffle').addEventListener('click', async () => {
-  if(shuffles<=0){
-    toast('No shuffles left. Watch ad for +1 shuffle');
-    await showAdForShuffle();
-    return;
-  }
-  if(coins<10){
-    toast('Need 10 coins. Watch ad for +1 shuffle');
-    await showAdForShuffle();
-    return;
-  }
-  coins -= 10;
-  shuffles--;
-  shuffleBoard();
-  updateHUD();
-});
+function checkWin(){
+  if(moves>=moveLimit){ toast('Out of moves!'); lock=true }
+  // Win check logic here
+}
 
-document.getElementById('btnHint').addEventListener('click', () => {
-  const hint = findHint();
-  if(hint){
-    const [r1,c1,r2,c2] = hint;
-    const t1 = boardEl.querySelector(`.tile[data-r="${r1}"][data-c="${c1}"]`);
-    const t2 = boardEl.querySelector(`.tile[data-r="${r2}"][data-c="${c2}"]`);
-    t1.style.outline = '2px solid var(--gold)';
-    t2.style.outline = '2px solid var(--gold)';
-    setTimeout(()=>{
-      t1.style.outline = '';
-      t2.style.outline = '';
-    }, 1000);
-  } else {
-    toast('No moves. Shuffle board!');
-  }
-});
+// SHUFFLE WITH AD + FREE 10 EVERY LEVEL
+document.getElementById('btnShuffle').onclick=async()=>{
+  if(shuffles>0){ shuffles--; shuffleBoard(); updateHUD(); return }
+  if(coins>=10){ coins-=10; shuffleBoard(); updateHUD(); return }
+  toast('Watch ad for shuffle...');
+  try{ await show_11148292(); shuffles++; updateHUD(); toast('+1 shuffle') }
+  catch(e){ toast('Ad not available. Free shuffle'); shuffles++; updateHUD() } // fallback
+}
 
-document.getElementById('btnReset').addEventListener('click', () => {
-  score = 0; coins = 0; shuffles = 3; moves = 0;
-  init();
-});
-
-document.getElementById('btnSell').addEventListener('click', () => {
-  coins += 100;
-  updateHUD();
-  toast('+100 coins');
-});
-
-document.getElementById('btnContinue').addEventListener('click', () => {
-  modalEl.classList.remove('show');
-  levelTarget += 10000;
-  toast('New target: ' + levelTarget);
-});
-
-document.getElementById('btnRestart').addEventListener('click', () => {
-  modalEl.classList.remove('show');
-  score = 0; coins = 0; shuffles = 3; moves = 0; levelTarget = 10000;
-  init();
-});
-
-// SHUFFLE LOGIC
 function shuffleBoard(){
-  const flat = grid.flat();
-  do{
-    for(let i=flat.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [flat[i], flat[j]] = [flat[j], flat[i]];
-    }
-    let idx=0;
-    for(let r=0;r<SIZE;r++){
-      for(let c=0;c<SIZE;c++){
-        grid[r][c] = flat[idx++];
-      }
-    }
-  } while(findAllMatches().length>0);
+  const flat=grid.flat().filter(v=>v>=0);
+  do{ flat.sort(()=>Math.random()-0.5); let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]>=0)grid[r][c]=flat[i++] }
+  while(findMatches().length>0);
   render();
 }
 
-function findHint(){
-  for(let r=0;r<SIZE;r++){
-    for(let c=0;c<SIZE;c++){
-      if(c<SIZE-1){
-        swap(r,c,r,c+1);
-        if(findAllMatches().length>0){
-          swap(r,c,r,c+1);
-          return [r,c,r,c+1];
-        }
-        swap(r,c,r,c+1);
-      }
-      if(r<SIZE-1){
-        swap(r,c,r+1,c);
-        if(findAllMatches().length>0){
-          swap(r,c,r+1,c);
-          return [r,c,r+1,c];
-        }
-        swap(r,c,r+1,c);
-      }
-    }
+// STORE + SKILLS
+document.getElementById('btnStore').onclick=()=>document.getElementById('storeModal').classList.add('show');
+function closeStore(){document.getElementById('storeModal').classList.remove('show')}
+
+function useSkill(type){
+  if(skills[type]<=0){ toast('No '+type+' left. Buy in store'); return }
+  skills[type]--;
+  if(type==='bomb'){ // clear 3x3
+    const r=Math.floor(SIZE/2), c=Math.floor(SIZE/2);
+    for(let i=r-1;i<=r+1;i++)for(let j=c-1;j<=c+1;j++)if(i>=0&&i<SIZE&&j>=0&&j<SIZE)grid[i][j]=-1;
   }
-  return null;
+  if(type==='laser'){ // clear row
+    const r=Math.floor(Math.random()*SIZE);
+    for(let c=0;c<SIZE;c++)grid[r][c]=-1;
+  }
+  if(type==='ufo'){ // clear all of random suit
+    const suit=Math.floor(Math.random()*4);
+    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]==suit)grid[r][c]=-1;
+  }
+  if(type==='sickle'){ // clear 1 random tile
+    const r=Math.floor(Math.random()*SIZE), c=Math.floor(Math.random()*SIZE);
+    grid[r][c]=-1;
+  }
+  resolve(findMatches()); closeStore(); updateHUD();
 }
 
-// MONETAG AD FOR SHUFFLE
-async function showAdForShuffle(){
-  try{
-    await show_8655637();
-    shuffles++;
-    updateHUD();
-    toast('+1 shuffle granted');
-  } catch(e){
-    toast('Ad not available. Try again later');
-    console.log('Monetag error:', e);
-  }
+function buySkill(type, price){
+  if(stars<price){ toast('Not enough Stars ⭐'); return }
+  stars-=price; skills[type]++; updateHUD(); toast('Bought '+type)
 }
 
-// INIT GAME
+// DUEL BUTTON
+document.getElementById('btnDuel').onclick=()=>{
+  const bot='RaelKertiaArenaBot';
+  const userId='guest';
+  const url=`https://t.me/${bot}?startapp=duel_${userId}`;
+  if(window.Telegram?.WebApp) Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=⚔️ Duel me in Rael Kertia Arena!`);
+  else window.open(url,'_blank');
+}
+
+// PROFILE - CIRCLE UPLOAD
+function openProfile(){
+  const input=document.createElement('input'); input.type='file'; input.accept='image/*';
+  input.onchange=e=>{ const f=e.target.files[0]; if(f){ const r=new FileReader(); r.onload=ev=>{document.getElementById('avatar').src=ev.target.result; localStorage.setItem('avatar',ev.target.result)}; r.readAsDataURL(f) }};
+  input.click();
+}
+
+// RESET = NEW LEVEL WITH 10 FREE SHUFFLES
+document.getElementById('btnReset').onclick=()=>{ level++; init() }
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500) }
+
+// LOAD AVATAR
+const saved=localStorage.getItem('avatar'); if(saved) document.getElementById('avatar').src=saved;
+
 init();
 </script>
 </body>
