@@ -3,32 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Rael Kertia Arena V4.5</title>
+<title>Rael Kertia Arena V4.6</title>
 <style>
   :root{--bg:#0a0f1e; --panel:#121a2b; --text:#e5e7eb; --muted:#9aa3b2; --gold:#f59e0b}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
- .wrap{display:flex; flex-direction:column; height:100vh}
+.wrap{display:flex; flex-direction:column; height:100vh}
   header{display:flex; justify-content:space-between; padding:8px 12px; background:#0b1222; border-bottom:1px solid #1f2937}
- .brand{display:flex; align-items:center; gap:8px}
- .logo{width:32px; height:32px; border-radius:50%; background:radial-gradient(circle,#4ade80,#065f46); cursor:pointer}
- .hud{display:flex; gap:6px; font-size:12px}
- .pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
- .goal{font-size:11px; color:var(--gold); text-align:center; padding:4px}
- .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px}
- .board{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; width:min(94vw,500px); aspect-ratio:1/1; background:#0b1222; padding:8px; border-radius:16px; border:1px solid #1f2937}
- .tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; background:#0f172a; border:1px solid #1f2937; touch-action:none}
- .tile.drag-over{outline:2px solid var(--gold)}
- .footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222; flex-wrap:wrap}
+.brand{display:flex; align-items:center; gap:8px}
+.logo{width:32px; height:32px; border-radius:50%; background:radial-gradient(circle,#4ade80,#065f46); cursor:pointer; object-fit:cover}
+.hud{display:flex; gap:6px; font-size:12px}
+.pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
+.username{font-size:11px; color:var(--muted)}
+.goal{font-size:11px; color:var(--gold); text-align:center; padding:4px}
+.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px}
+.board{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; width:min(94vw,500px); height:min(94vw,500px); background:#0b1222; padding:8px; border-radius:16px; border:1px solid #1f2937}
+.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; background:#0f172a; border:1px solid #1f2937; touch-action:none; cursor:pointer}
+.footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222; flex-wrap:wrap}
   button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
- .toast{position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#0f172a; border:1px solid #1f2937; padding:8px 12px; border-radius:999px; opacity:0; transition:.2s}
- .toast.show{opacity:1}
- .store{position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:100}
- .store.show{display:flex}
- .card{width:90vw; max-width:380px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:16px}
- .skill-btn{display:flex; justify-content:space-between; padding:10px; margin:6px 0; background:#0f172a; border-radius:8px; cursor:pointer}
- .skill-count{color:var(--gold)}
+.toast{position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#0f172a; border:1px solid #1f2937; padding:8px 12px; border-radius:999px; opacity:0; transition:.2s; z-index:999}
+.toast.show{opacity:1}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
@@ -36,10 +31,10 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" onclick="openProfile()">
+      <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen" onclick="openProfile()">
       <div>
-        <div style="font-weight:700">Rael Kertia Arena</div>
-        <div style="font-size:11px; color:var(--muted)">Level <span id="level">1</span></div>
+        <div style="font-weight:700">Sstephen</div>
+        <div class="username">Level <span id="level">1</span></div>
       </div>
     </div>
     <div class="hud">
@@ -66,31 +61,14 @@
 
 <div id="toast" class="toast"></div>
 
-<div id="storeModal" class="store">
-  <div class="card">
-    <h3>🏪 Power-Ups Store</h3>
-    <div class="small">Use skills or buy with Stars ⭐</div>
-    <div class="skill-btn" onclick="useSkill('bomb')">💣 Bomb <span class="skill-count" id="bombCount">0</span></div>
-    <div class="skill-btn" onclick="useSkill('laser')">⚡ Laser <span class="skill-count" id="laserCount">0</span></div>
-    <div class="skill-btn" onclick="useSkill('ufo')">🛸 UFO <span class="skill-count" id="ufoCount">0</span></div>
-    <div class="skill-btn" onclick="useSkill('sickle')">🌙 Sickle <span class="skill-count" id="sickleCount">0</span></div>
-    <hr style="border-color:#1f2937; margin:12px 0">
-    <div class="skill-btn" onclick="buySkill('bomb',50)">Buy Bomb - 50⭐</div>
-    <div class="skill-btn" onclick="buySkill('laser',40)">Buy Laser - 40⭐</div>
-    <div class="skill-btn" onclick="buySkill('ufo',80)">Buy UFO - 80⭐</div>
-    <button onclick="closeStore()" style="width:100%; margin-top:10px">Close</button>
-  </div>
-</div>
-
 <script>
 const SIZE=8;
-const SUITS=['♦','♠','♣','♥']; // Diamond, Spades, Clovers, Hearts
+const SUITS=['♦','♠','♣','♥'];
 let grid=[], selected=null, dragStart=null;
 let coins=0, stars=0, shuffles=10, moves=0, moveLimit=25;
-let level=1, skills={bomb:0, laser:0, ufo:0, sickle:0};
-let lock=false;
+let level=1, lock=false;
 
-// INIT - FREE 10 SHUFFLES EVERY LEVEL
+// INIT - FREE 10 SHUFFLES
 function init(){
   shuffles=10; moves=0;
   grid=Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>Math.floor(Math.random()*4)));
@@ -101,9 +79,9 @@ function init(){
 }
 
 function removeMatches(){
-  let changed=true;
-  while(changed){
-    changed=false;
+  let changed=true, attempts=0;
+  while(changed && attempts<100){
+    changed=false; attempts++;
     for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
       if(c>=2 && grid[r][c]==grid[r][c-1] && grid[r][c]==grid[r][c-2]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
       if(r>=2 && grid[r][c]==grid[r-1][c] && grid[r][c]==grid[r-2][c]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
@@ -120,14 +98,14 @@ function render(){
     tile.dataset.r=r; tile.dataset.c=c;
     tile.textContent=SUITS[grid[r][c]];
     tile.addEventListener('touchstart', dragStartHandler);
-    tile.addEventListener('touchmove', dragMoveHandler);
     tile.addEventListener('touchend', dragEndHandler);
     tile.addEventListener('mousedown', dragStartHandler);
+    tile.addEventListener('mouseup', dragEndHandler);
     board.appendChild(tile);
   }
 }
 
-// SWIPE LIKE CANDY CRUSH
+// SWIPE LOGIC
 function dragStartHandler(e){
   if(lock) return;
   const t=e.target.closest('.tile');
@@ -139,11 +117,11 @@ function dragEndHandler(e){
   const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
   const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
   const dx=x-dragStart.x, dy=y-dragStart.y;
-  if(Math.abs(dx)<30 && Math.abs(dy)<30) return; // no swipe
+  if(Math.abs(dx)<25 && Math.abs(dy)<25){ dragStart=null; return }
 
   let r2=dragStart.r, c2=dragStart.c;
   if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
-  if(r2<0||r2>=SIZE||c2<0||c2>=SIZE) return;
+  if(r2<0||r2>=SIZE||c2<0||c2>=SIZE){ dragStart=null; return }
 
   trySwap(dragStart.r, dragStart.c, r2, c2);
   dragStart=null;
@@ -154,13 +132,17 @@ function trySwap(r1,c1,r2,c2){
   swap(r1,c1,r2,c2);
   const matches=findMatches();
   if(matches.length===0){ swap(r1,c1,r2,c2); toast('No match'); return }
-  lock=true; moves++; resolve(matches);
-  updateHUD(); checkWin();
+  lock=true; moves++;
+  resolve(matches);
+  updateHUD();
+  if(moves>=moveLimit) toast('Out of moves!');
 }
 
 // MATCH LOGIC
 function swap(r1,c1,r2,c2){ const t=grid[r1][c1]; grid[r1][c1]=grid[r2][c2]; grid[r2][c2]=t }
-function findMatches(){ const m=new Set();
+
+function findMatches(){
+  const m=new Set();
   for(let r=0;r<SIZE;r++){let c=0;while(c<SIZE){let s=c;while(c<SIZE&&grid[r][c]==grid[r][s])c++; if(c-s>=3)for(let k=s;k<c;k++)m.add(r+','+k)}}
   for(let c=0;c<SIZE;c++){let r=0;while(r<SIZE){let s=r;while(r<SIZE&&grid[r][c]==grid[s][c])r++; if(r-s>=3)for(let k=s;k<r;k++)m.add(k+','+c)}}
   return Array.from(m).map(s=>s.split(',').map(Number))
@@ -171,15 +153,32 @@ async function resolve(matches){
   while(matches.length>0){
     score(matches.length*10*combo);
     for(const[r,c] of matches) grid[r][c]=-1;
-    render(); await sleep(200);
-    collapse(); fill(); render(); await sleep(200);
+    render(); await sleep(150);
+    collapse(); fill(); render(); await sleep(150);
     matches=findMatches(); combo++;
   }
   lock=false;
 }
 
-function collapse(){ for(let c=0;c<SIZE;c++){let w=SIZE-1; for(let r=SIZE-1;r>=0;r--)if(grid[r][c]>=0){grid[w--][c]=grid[r][c]} while(w>=0)grid[w--][c]=-1} }
-function fill(){ for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]==-1)grid[r][c]=Math.floor(Math.random()*4) }
+function collapse(){
+  for(let c=0;c<SIZE;c++){
+    let write=SIZE-1;
+    for(let r=SIZE-1;r>=0;r--){
+      if(grid[r][c]>=0){
+        grid[write][c]=grid[r][c];
+        write--;
+      }
+    }
+    for(let r=write;r>=0;r--) grid[r][c]=-1;
+  }
+}
+
+function fill(){
+  for(let r=0;r<SIZE;r++)
+    for(let c=0;c<SIZE;c++)
+      if(grid[r][c]==-1) grid[r][c]=Math.floor(Math.random()*4);
+}
+
 function score(v){ coins+=v }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
@@ -189,7 +188,6 @@ function updateHUD(){
   document.getElementById('shuffles').textContent=shuffles;
   document.getElementById('moves').textContent=moves;
   document.getElementById('level').textContent=level;
-  ['bomb','laser','ufo','sickle'].forEach(s=>document.getElementById(s+'Count').textContent=skills[s])
 }
 
 function updateGoal(){
@@ -200,83 +198,45 @@ function updateGoal(){
   moveLimit=g[4];
 }
 
-function checkWin(){
-  if(moves>=moveLimit){ toast('Out of moves!'); lock=true }
-  // Win check logic here
-}
-
-// SHUFFLE WITH AD + FREE 10 EVERY LEVEL
+// SHUFFLE WITH AD
 document.getElementById('btnShuffle').onclick=async()=>{
   if(shuffles>0){ shuffles--; shuffleBoard(); updateHUD(); return }
   if(coins>=10){ coins-=10; shuffleBoard(); updateHUD(); return }
-  toast('Watch ad for shuffle...');
+  toast('Watching ad...');
   try{ await show_11148292(); shuffles++; updateHUD(); toast('+1 shuffle') }
-  catch(e){ toast('Ad not available. Free shuffle'); shuffles++; updateHUD() } // fallback
+  catch(e){ shuffles++; updateHUD(); toast('No ad. Free shuffle given') }
 }
 
 function shuffleBoard(){
-  const flat=grid.flat().filter(v=>v>=0);
-  do{ flat.sort(()=>Math.random()-0.5); let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]>=0)grid[r][c]=flat[i++] }
+  let flat=grid.flat();
+  do{ flat.sort(()=>Math.random()-0.5); let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)grid[r][c]=flat[i++] }
   while(findMatches().length>0);
   render();
 }
 
-// STORE + SKILLS
-document.getElementById('btnStore').onclick=()=>document.getElementById('storeModal').classList.add('show');
-function closeStore(){document.getElementById('storeModal').classList.remove('show')}
+// BUTTONS
+document.getElementById('btnReset').onclick=()=>{ level++; init() }
+document.getElementById('btnStore').onclick=()=>toast('Store coming V4.7')
+document.getElementById('btnDuel').onclick=()=>toast('Duel mode coming V4.7')
 
-function useSkill(type){
-  if(skills[type]<=0){ toast('No '+type+' left. Buy in store'); return }
-  skills[type]--;
-  if(type==='bomb'){ // clear 3x3
-    const r=Math.floor(SIZE/2), c=Math.floor(SIZE/2);
-    for(let i=r-1;i<=r+1;i++)for(let j=c-1;j<=c+1;j++)if(i>=0&&i<SIZE&&j>=0&&j<SIZE)grid[i][j]=-1;
-  }
-  if(type==='laser'){ // clear row
-    const r=Math.floor(Math.random()*SIZE);
-    for(let c=0;c<SIZE;c++)grid[r][c]=-1;
-  }
-  if(type==='ufo'){ // clear all of random suit
-    const suit=Math.floor(Math.random()*4);
-    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]==suit)grid[r][c]=-1;
-  }
-  if(type==='sickle'){ // clear 1 random tile
-    const r=Math.floor(Math.random()*SIZE), c=Math.floor(Math.random()*SIZE);
-    grid[r][c]=-1;
-  }
-  resolve(findMatches()); closeStore(); updateHUD();
-}
-
-function buySkill(type, price){
-  if(stars<price){ toast('Not enough Stars ⭐'); return }
-  stars-=price; skills[type]++; updateHUD(); toast('Bought '+type)
-}
-
-// DUEL BUTTON
-document.getElementById('btnDuel').onclick=()=>{
-  const bot='RaelKertiaArenaBot';
-  const userId='guest';
-  const url=`https://t.me/${bot}?startapp=duel_${userId}`;
-  if(window.Telegram?.WebApp) Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=⚔️ Duel me in Rael Kertia Arena!`);
-  else window.open(url,'_blank');
-}
-
-// PROFILE - CIRCLE UPLOAD
+// PROFILE - YOUR NAME + UPLOAD
 function openProfile(){
+  const name=prompt('Edit name:', localStorage.getItem('playerName')||'Sstephen');
+  if(name) { localStorage.setItem('playerName', name); document.querySelector('.brand div').textContent=name }
+
   const input=document.createElement('input'); input.type='file'; input.accept='image/*';
   input.onchange=e=>{ const f=e.target.files[0]; if(f){ const r=new FileReader(); r.onload=ev=>{document.getElementById('avatar').src=ev.target.result; localStorage.setItem('avatar',ev.target.result)}; r.readAsDataURL(f) }};
   input.click();
 }
 
-// RESET = NEW LEVEL WITH 10 FREE SHUFFLES
-document.getElementById('btnReset').onclick=()=>{ level++; init() }
-
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500) }
-
-// LOAD AVATAR
-const saved=localStorage.getItem('avatar'); if(saved) document.getElementById('avatar').src=saved;
+// LOAD SAVED DATA
+const savedName=localStorage.getItem('playerName');
+if(savedName) document.querySelector('.brand div').textContent=savedName;
+const savedAvatar=localStorage.getItem('avatar');
+if(savedAvatar) document.getElementById('avatar').src=savedAvatar;
 
 init();
+console.log('Game loaded. Grid:', grid);
 </script>
 </body>
 </html>
