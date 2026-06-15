@@ -16,7 +16,6 @@
 .profile-info{font-size:12px}
 .profile-info.name{font-weight:700}
 .profile-info.rank{font-size:10px; color:#9aa3b2}
-.vip{font-size:8px; background:#f59e0b; color:#000; padding:1px 4px; border-radius:4px; margin-left:4px}
 .hud{display:flex; gap:6px; font-size:11px}
 .pill{padding:4px 7px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
 .goal{font-size:11px; color:#f59e0b; text-align:center; padding:5px; display:flex; gap:10px; justify-content:center}
@@ -30,10 +29,6 @@
 .suit-s{background:#3b82f6; color:#fff}
 .suit-h{background:#ef4444; color:#fff}
 .suit-c{background:#22c55e; color:#fff}
-/* SKILL TILES */
-.tile.skill-laser{background:linear-gradient(90deg,#3b82f6,#60a5fa); color:#fff; box-shadow:0 0 10px #3b82f6}
-.tile.skill-bomb{background:radial-gradient(circle,#fbbf24,#f59e0b); color:#000; box-shadow:0 0 12px #fbbf24}
-.tile.skill-ufo{background:linear-gradient(135deg,#a855f7,#ec4899); color:#fff; box-shadow:0 0 15px #a855f7}
 .bottomNav{display:flex; justify-content:space-around; padding:6px 0; background:var(--nav); border-top:1px solid #1f2937}
 .navBtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px; background:none; border:none; color:#9aa3b2; font-size:10px; cursor:pointer}
 .navBtn.active{color:#4ade80}
@@ -48,8 +43,11 @@
 .modal{position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:100}
 .modal.show{display:flex}
 .card{width:90vw; max-width:360px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:18px; text-align:center}
-.storeGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px}
-.storeItem{background:#1a2333; border:1px solid #2d3748; border-radius:12px; padding:12px; cursor:pointer; opacity:0.5}
+.action-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px}
+.action-grid button{padding:12px; font-size:11px}
+.duelTable{width:100%; font-size:11px; margin-top:12px}
+.duelTable td{padding:6px; border-bottom:1px solid #1f2937; text-align:left}
+.duelTable.crown{color:#fbbf24}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
@@ -59,13 +57,12 @@
     <div class="profile" onclick="openProfile()">
       <img class="logo" id="userPic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest">
       <div class="profile-info">
-        <div class="name"><span id="userName">Guest</span><span id="vipBadge" class="vip" style="display:none">VIP</span></div>
-        <div class="rank">Rank: <span id="rank">Bronze</span></div>
+        <div class="name"><span id="userName">Guest</span></div>
+        <div class="rank">Rank: <span id="rank">Bronze</span> | Wins: <span id="wins">0</span></div>
       </div>
     </div>
     <div class="hud">
       <div class="pill">🏆<span id="points">0</span></div>
-      <div class="pill">⭐<span id="stars">0</span></div>
       <div class="pill">🔄<span id="shuffles">10</span></div>
     </div>
   </header>
@@ -103,14 +100,19 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- POST-ROUND 4 BUTTON REPORT -->
 <div id="endModal" class="modal">
   <div class="card">
     <h2 id="endTitle">Round Complete!</h2>
     <div style="font-size:32px; margin:10px 0" id="endModalStars">⭐</div>
     <div style="font-size:18px">Points: <span id="endPoints">0</span></div>
     <div style="font-size:12px; color:#9aa3b2" id="endTime">Time: 1:23</div>
-    <button class="primary" onclick="watchAdForDouble()" style="width:100%; margin-top:12px">📺 Double Points</button>
-    <button onclick="showAdThenNext()" style="width:100%; margin-top:8px">Watch Ad → Next Level</button>
+    <div class="action-grid">
+      <button class="primary" onclick="watchAdForDouble()">📺 Double Points</button>
+      <button onclick="init(true)">➡️ Next Round</button>
+      <button onclick="init()">🔄 Play Again</button>
+      <button onclick="shareReport()">📤 Challenge Friend</button>
+    </div>
   </div>
 </div>
 
@@ -119,15 +121,27 @@
     <img id="profilePic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest" style="width:64px;border-radius:50%;margin-bottom:8px">
     <h2 id="profileName">Guest</h2>
     <p>Rank: <span id="profileRank">Bronze</span></p>
+    <p>Wins: <span id="profileWins">0</span></p>
     <p style="font-size:10px; color:#666" id="profileId"></p>
     <button onclick="document.getElementById('profileModal').classList.remove('show')" style="width:100%;margin-top:12px">Close</button>
   </div>
 </div>
 
+<div id="duelModal" class="modal">
+  <div class="card">
+    <h2>⚔️ Ghost Duel History</h2>
+    <table class="duelTable" id="duelTable">
+      <tr><td>Opponent</td><td>Result</td><td>Score</td></tr>
+    </table>
+    <button onclick="startGhostDuel()" class="primary" style="width:100%;margin-top:12px">Start New Duel</button>
+    <button onclick="document.getElementById('duelModal').classList.remove('show')" style="width:100%;margin-top:8px">Close</button>
+  </div>
+</div>
+
 <div id="storeModal" class="modal">
   <div class="card">
-    <h2>🛒 Store - 72h Observation Mode</h2>
-    <div style="font-size:12px; color:#9aa3b2; margin-bottom:8px">Store opens after observation period</div>
+    <h2>🛒 Store - Coming Day 4</h2>
+    <div style="font-size:12px; color:#9aa3b2">Disabled during 72h observation</div>
     <button onclick="closeStore()" style="width:100%; margin-top:12px">Close</button>
   </div>
 </div>
@@ -139,13 +153,12 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 const SIZE=8;
-const SUITS=[{s:'♦️',c:'suit-d',type:'normal'},{s:'♠️',c:'suit-s',type:'normal'},{s:'♣️',c:'suit-c',type:'normal'},{s:'♥️',c:'suit-h',type:'normal'},{s:'⚡',c:'skill-laser',type:'laser'},{s:'💣',c:'skill-bomb',type:'bomb'},{s:'🛸',c:'skill-ufo',type:'ufo'}];
+const SUITS=[{s:'♦️',c:'suit-d'},{s:'♠️',c:'suit-s'},{s:'♣️',c:'suit-c'},{s:'♥️',c:'suit-h'}];
 let grid=[], dragStart=null, lock=false;
-let points=0, stars=0, shuffles=10, moves=0, timer=null, timeLeft=120;
+let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
 let goals={diamond:0, target:20}, level=1;
-let isVIP=false;
 
-// INIT TELEGRAM USER
+// TELEGRAM USER
 const user = tg.initDataUnsafe.user;
 if(user){
   document.getElementById('userName').textContent = user.first_name;
@@ -157,7 +170,13 @@ if(user){
   }
 }
 
-// PHASE 1: 8x8 GRID + PROFILE DONE
+// LOCAL STORAGE
+let wins = parseInt(localStorage.getItem('rka_wins') || '0');
+let duelHistory = JSON.parse(localStorage.getItem('rka_duels') || '[]');
+document.getElementById('wins').textContent = wins;
+document.getElementById('profileWins').textContent = wins;
+
+// CORE GAME
 function init(newLevel=false){
   lock=false;
   if(newLevel) level++;
@@ -187,18 +206,12 @@ function render(){
   board.innerHTML='';
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
     const tile=document.createElement('div');
-    const cell = grid[r][c];
-    if(cell==-1){
+    if(grid[r][c]==-1){
       tile.className='tile empty';
       tile.textContent='';
-    } else if(typeof cell === 'object' && cell.type){
-      // SKILL TILE
-      tile.className='tile '+cell.c;
-      tile.textContent=cell.s;
-      tile.dataset.skill=cell.type;
     } else {
-      tile.className='tile '+SUITS[cell].c;
-      tile.textContent=SUITS[cell].s;
+      tile.className='tile '+SUITS[grid[r][c]].c;
+      tile.textContent=SUITS[grid[r][c]].s;
     }
     tile.dataset.r=r; tile.dataset.c=c;
     tile.onmousedown = dragStartHandler;
@@ -209,41 +222,7 @@ function render(){
   }
 }
 
-// PHASE 2 HOOK: COMBO DETECTION
-function getMatchShape(coords){
-  if(coords.length < 4) return 'normal';
-
-  // Check if 5 in a row/col
-  if(coords.length >= 5){
-    const rows = [...new Set(coords.map(c=>c[0]))];
-    const cols = [...new Set(coords.map(c=>c[1]))];
-    if(rows.length === 1 || cols.length === 1) return 'ufo';
-  }
-
-  // Check if 4 in a row/col
-  if(coords.length === 4){
-    const rows = [...new Set(coords.map(c=>c[0]))];
-    const cols = [...new Set(coords.map(c=>c[1]))];
-    if(rows.length === 1 || cols.length === 1) return 'laser';
-  }
-
-  // Check T or L shape for bomb
-  if(coords.length >= 4){
-    const center = coords[0];
-    const adj = coords.filter(c => Math.abs(c[0]-center[0])+Math.abs(c[1]-center[1]) === 1);
-    if(adj.length >= 3) return 'bomb';
-  }
-
-  return 'normal';
-}
-
-function spawnSkill(type, pos){
-  // PHASE 2: Disabled for 72h testing. Enable after retention confirmed
-  // const skillMap = {laser:4, bomb:5, ufo:6};
-  // grid[pos[0]][pos[1]] = {s:SUITS[skillMap[type]].s, c:SUITS[skillMap[type]].c, type:type};
-  console.log('Skill would spawn:', type, 'at', pos);
-}
-
+// FIXED SWIPE LOGIC
 function dragStartHandler(e){
   e.preventDefault();
   if(lock) return;
@@ -257,15 +236,27 @@ function dragStartHandler(e){
 function dragEndHandler(e){
   e.preventDefault();
   if(!dragStart) return;
-  const x = e.changedTouches?e.changedTouches[0].clientX:e.clientX;
-  const y = e.changedTouches?e.changedTouches[0].clientY:e.clientY;
-  const dx=x-dragStart.x, dy=y-dragStart.y;
-  if(Math.abs(dx)<20 && Math.abs(dy)<20){ dragStart=null; return }
-  let r2=dragStart.r, c2=dragStart.c;
-  if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
-  if(r2<0||r2>=SIZE||c2<0||c2>=SIZE){ lock=false; dragStart=null; return }
-  trySwap(dragStart.r, dragStart.c, r2, c2);
-  dragStart=null;
+
+  const x = e.changedTouches? e.changedTouches[0].clientX : e.clientX;
+  const y = e.changedTouches? e.changedTouches[0].clientY : e.clientY;
+  const dx = x - dragStart.x;
+  const dy = y - dragStart.y;
+
+  // 20px threshold
+  if(Math.abs(dx) < 20 && Math.abs(dy) < 20){ dragStart = null; return; }
+
+  let r2 = dragStart.r, c2 = dragStart.c;
+  if(Math.abs(dx) > Math.abs(dy)){
+    c2 += (dx > 0)? 1 : -1; // Right or Left
+  } else {
+    r2 += (dy > 0)? 1 : -1; // Down or Up
+  }
+
+  // Validate bounds and swap
+  if(r2 >= 0 && r2 < SIZE && c2 >= 0 && c2 < SIZE){
+    trySwap(dragStart.r, dragStart.c, r2, c2);
+  }
+  dragStart = null;
 }
 
 function trySwap(r1,c1,r2,c2){
@@ -298,21 +289,13 @@ function findMatches(){
 async function resolve(matches){
   let combo=1;
   while(matches.length>0){
-    // PHASE 2: Detect skill before clearing
-    matches.forEach(match=>{
-      const shape = getMatchShape(match);
-      if(shape!== 'normal' && combo === 1){ // Only spawn on first clear
-        spawnSkill(shape, match[0]);
-      }
-    });
-
     const pts=matches.length*10*combo;
     points+=pts;
     addPop(pts);
     document.getElementById('sndMatch').play().catch(()=>{});
 
     matches.forEach(([r,c])=>{
-      if(typeof grid[r][c] === 'number' && SUITS[grid[r][c]].s==='♦️') goals.diamond++;
+      if(SUITS[grid[r][c]].s==='♦️') goals.diamond++;
       grid[r][c]=-1;
     });
 
@@ -327,7 +310,7 @@ function collapse(){
   for(let c=0;c<SIZE;c++){
     let write=SIZE-1;
     for(let r=SIZE-1;r>=0;r--){
-      if(grid[r][c]!==-1){ grid[write][c]=grid[r][c]; write-- }
+      if(grid[r][c]>=0){ grid[write][c]=grid[r][c]; write-- }
     }
     for(let r=write;r>=0;r--) grid[r][c]=-1;
   }
@@ -361,7 +344,6 @@ function getRank(score){
 
 function updateHUD(){
   document.getElementById('points').textContent=points;
-  document.getElementById('stars').textContent=stars;
   document.getElementById('shuffles').textContent=shuffles;
   document.getElementById('shuffleCount').textContent='('+shuffles+')';
   document.getElementById('rank').textContent=getRank(points);
@@ -397,17 +379,17 @@ function endRound(win){
   document.getElementById('endTitle').textContent= win?'🎉 Round Complete!':'💀 Time Up!';
   document.getElementById('endModalStars').textContent='⭐'.repeat(starsWin)+'☆'.repeat(3-starsWin);
   document.getElementById('endPoints').textContent=points;
-  document.getElementById('endTime').textContent=`Time: ${mins}:${secs.toString().padStart(2,'0')} | Level ${level}`;
+  document.getElementById('endTime').textContent=`Time: ${mins}:${secs.toString().padStart(2,'0')} | L${level}`;
   document.getElementById('endModal').classList.add('show');
 }
 
-// SAFE AD CALL
+// SAFE ADS
 async function safeShowAd(){
   if(typeof show_11148292 === 'function'){
-    console.log('Ad started'); // TELEMETRY HOOK
+    console.log('Ad started');
     return await show_11148292();
   } else {
-    toast('Ad SDK loading...');
+    toast('Ad loading...');
     return Promise.reject('SDK not ready');
   }
 }
@@ -449,36 +431,88 @@ async function watchAdForDouble(){
   }
 }
 
-async function showAdThenNext(){
-  toast('Watch ad for next level...');
-  try{
-    await safeShowAd();
-    document.getElementById('endModal').classList.remove('show');
-    init(true);
-  } catch(e){
-    toast('Ad failed');
-  }
+// 4-BUTTON SHARE REPORT
+function shareReport(){
+  const text = `I scored ${points} points in Level ${level} on Rael Kertia Arena! Beat my score 👊`;
+  tg.switchInlineQuery(text, ['users', 'groups', 'channels']);
 }
 
-// PROFILE MODAL
+// GHOST DUEL SYSTEM
+const ghostOpponents = [
+  {name:'ShadowFox', score:Math.floor(Math.random()*2000)+500},
+  {name:'IceWolf', score:Math.floor(Math.random()*2000)+500},
+  {name:'ThunderCat', score:Math.floor(Math.random()*2000)+500},
+  {name:'BlazeEagle', score:Math.floor(Math.random()*2000)+500},
+  {name:'NightOwl', score:Math.floor(Math.random()*2000)+500}
+];
+
+function startGhostDuel(){
+  const opponent = ghostOpponents[Math.floor(Math.random()*ghostOpponents.length)];
+  const win = points > opponent.score;
+
+  if(win){
+    wins++;
+    localStorage.setItem('rka_wins', wins);
+    document.getElementById('wins').textContent = wins;
+    document.getElementById('profileWins').textContent = wins;
+  }
+
+  duelHistory.unshift({
+    opponent: opponent.name,
+    status: win? 'Win' : 'Lose',
+    score: points,
+    oppScore: opponent.score,
+    crown: win,
+    date: new Date().toLocaleDateString()
+  });
+
+  if(duelHistory.length > 20) duelHistory = duelHistory.slice(0, 20);
+  localStorage.setItem('rka_duels', JSON.stringify(duelHistory));
+
+  renderDuelTable();
+  toast(win? 'You won the duel! 👑' : 'You lost. Try again!');
+  document.getElementById('duelModal').classList.add('show');
+}
+
+function renderDuelTable(){
+  const table = document.getElementById('duelTable');
+  table.innerHTML = '<tr><td>Opponent</td><td>Result</td><td>Score</td></tr>';
+
+  if(duelHistory.length === 0){
+    table.innerHTML += '<tr><td colspan="3" style="text-align:center;color:#666">No duels yet</td></tr>';
+    return;
+  }
+
+  duelHistory.forEach(d=>{
+    table.innerHTML += `
+      <tr>
+        <td>${d.opponent}</td>
+        <td class="${d.crown? 'crown' : ''}">${d.status}</td>
+        <td>${d.score} vs ${d.oppScore}</td>
+      </tr>
+    `;
+  });
+}
+
+// UI
 function openProfile(){
   document.getElementById('profileModal').classList.add('show');
-  if(isVIP) document.getElementById('vipBadge').style.display='inline';
 }
 
-// BOTTOM NAV
 function showTab(tab){
   document.querySelectorAll('.navBtn').forEach(b=>b.classList.remove('active'));
   event.target.closest('.navBtn').classList.add('active');
 
-  if(tab==='store'){
-    document.getElementById('storeModal').classList.add('show');
-  } else if(tab==='duel'){
-    toast('Duel mode coming V5.2');
+  if(tab==='duel'){
+    renderDuelTable();
+    document.getElementById('duelModal').classList.add('show');
   } else if(tab==='leaderboard'){
     toast('Leaderboard manual for now');
+  } else if(tab==='store'){
+    document.getElementById('storeModal').classList.add('show');
   } else {
     document.getElementById('storeModal').classList.remove('show');
+    document.getElementById('duelModal').classList.remove('show');
   }
 }
 
