@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Rael Kertia Arena V4.8</title>
+<title>Rael Kertia Arena</title>
 <style>
   :root{--bg:#0a0f1e; --text:#e5e7eb; --gold:#f59e0b}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
@@ -16,9 +16,14 @@
 .goal{font-size:12px; color:var(--gold); text-align:center; padding:6px; display:flex; gap:12px; justify-content:center}
 .timer{color:#ef4444; font-weight:700}
 .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px; position:relative}
-.board{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; width:min(94vw,500px); height:min(94vw,500px); background:#0b1222; padding:8px; border-radius:16px; border:1px solid #1f2937}
-.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:32px; background:#0f172a; border:1px solid #1f2937; touch-action:none; cursor:pointer}
-.suit-d{color:#3b82f6}.suit-s{color:#22c55e}.suit-c{color:#ef4444}.suit-h{color:#ec4899}
+.board{display:grid; grid-template-columns:repeat(8,1fr); gap:3px; width:min(96vw,500px); height:min(96vw,500px); max-height:60vh; background:#0b1222; padding:6px; border-radius:16px; border:1px solid #1f2937}
+.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
+.tile:active{transform:scale(.95)}
+/* Colors: Diamond White, Spades Blue, Hearts Red, Clovers Green */
+.suit-d{color:#ffffff; text-shadow:0 0 10px #fff}
+.suit-s{color:#3b82f6; text-shadow:0 0 10px #2563eb}
+.suit-h{color:#ef4444; text-shadow:0 0 10px #dc2626}
+.suit-c{color:#22c55e; text-shadow:0 0 10px #16a34a}
 .footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222}
   button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
@@ -74,7 +79,7 @@
       <button class="primary" onclick="watchAdForDouble()">📺 Double Points</button>
       <button onclick="shareResult()">📤 Share</button>
     </div>
-    <button onclick="nextLevel()" style="width:100%; margin-top:8px">Next Level ▶️</button>
+    <button onclick="showAdThenNext()" style="width:100%; margin-top:8px">Watch Ad → Next Level</button>
   </div>
 </div>
 
@@ -85,10 +90,8 @@ const SIZE=8;
 const SUITS=[{s:'♦️',c:'suit-d',name:'diamond'},{s:'♠️',c:'suit-s',name:'spade'},{s:'♣️',c:'suit-c',name:'clover'},{s:'♥️',c:'suit-h',name:'heart'}];
 let grid=[], dragStart=null, lock=false;
 let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
-let goals={diamond:0, target:20}, level=1, difficulty='easy';
-let highScore=parseInt(localStorage.getItem('high')||'0');
+let goals={diamond:0, target:20}, level=1;
 
-// RANK
 function getRank(score){
   if(score>=100000) return 'Mythic '+Math.max(1,1000-Math.floor(score/100));
   if(score>=50000) return 'Mythic';
@@ -104,8 +107,7 @@ function getRank(score){
 function init(newLevel=false){
   if(newLevel) level++;
   points=0; moves=0; shuffles=10; goals={diamond:0, target:level<=3?20:100};
-  difficulty = level<=3?'easy':'hard';
-  timeLeft = difficulty==='easy'?120:60;
+  timeLeft = level<=3?120:60;
 
   grid=Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>Math.floor(Math.random()*4)));
   removeMatches();
@@ -141,10 +143,10 @@ function render(){
   }
 }
 
-// SWIPE
 function dragStartHandler(e){
   if(lock) return;
   const t=e.target.closest('.tile');
+  if(!t) return;
   dragStart={r:+t.dataset.r, c:+t.dataset.c, x:e.touches?e.touches[0].clientX:e.clientX, y:e.touches?e.touches[0].clientY:e.clientY};
 }
 
@@ -165,7 +167,12 @@ function trySwap(r1,c1,r2,c2){
   if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
   swap(r1,c1,r2,c2);
   const matches=findMatches();
-  if(matches.length===0){ swap(r1,c1,r2,c2); toast('No match'); return }
+  if(matches.length===0){
+    swap(r1,c1,r2,c2);
+    toast('No match');
+    lock=false;
+    return
+  }
   lock=true; moves++;
   resolve(matches);
   updateHUD();
@@ -255,22 +262,17 @@ function endRound(win){
   clearInterval(timer);
   lock=true;
   const stars = win? (timeLeft>60?3: timeLeft>30?2:1) : 0;
-  const mins=Math.floor((difficulty==='easy'?120:60 - timeLeft)/60);
-  const secs=(difficulty==='easy'?120:60 - timeLeft)%60;
+  const totalTime = level<=3?120:60;
+  const usedTime = totalTime - timeLeft;
+  const mins=Math.floor(usedTime/60), secs=usedTime%60;
 
   document.getElementById('endTitle').textContent= win?'🎉 Round Complete!':'💀 Time Up!';
   document.getElementById('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
   document.getElementById('endPoints').textContent=points;
   document.getElementById('endTime').textContent=`Time: ${mins}:${secs.toString().padStart(2,'0')} | Level ${level}`;
   document.getElementById('endModal').classList.add('show');
-
-  if(points>highScore){
-    highScore=points;
-    localStorage.setItem('high', highScore);
-  }
 }
 
-// SHUFFLE WITH ADS
 document.getElementById('btnShuffle').onclick=async()=>{
   if(shuffles>0){
     shuffles--;
@@ -278,18 +280,15 @@ document.getElementById('btnShuffle').onclick=async()=>{
     updateHUD();
     return;
   }
-
-  // No shuffles left = show ad
   toast('Watch ad for +5 shuffles...');
   try{
-    await show_11148292(); // MONETAG AD
+    await show_11148292();
     shuffles=5;
     shuffleBoard();
     updateHUD();
     toast('+5 shuffles added');
   } catch(e){
-    toast('Ad not available. Try again');
-    console.log('Monetag error:', e);
+    toast('Ad failed. Try again');
   }
 }
 
@@ -300,7 +299,6 @@ function shuffleBoard(){
   render();
 }
 
-// DOUBLE POINTS AD
 async function watchAdForDouble(){
   try{
     await show_11148292();
@@ -308,21 +306,17 @@ async function watchAdForDouble(){
     document.getElementById('endPoints').textContent=points;
     toast('Points doubled! x2');
   } catch(e){
-    toast('Ad failed. Points not doubled');
+    toast('Ad failed');
   }
 }
 
-// SHARE RESULT - WORDLE STYLE
-function shareResult(){
-  const stars=document.getElementById('stars').textContent;
-  const time=document.getElementById('endTime').textContent;
-  const text=`Rael Kertia Arena #${level} ${stars}\n${goals.diamond}/${goals.target} ♦️\n${points} pts | ${time}\nhttps://t.me/RaelKertiaArenaBot`;
-
-  if(navigator.share){
-    navigator.share({title:'Rael Kertia Arena', text});
-  } else {
-    navigator.clipboard.writeText(text);
-    toast('Result copied! Paste anywhere');
+async function showAdThenNext(){
+  toast('Watch ad for next level...');
+  try{
+    await show_11148292();
+    nextLevel();
+  } catch(e){
+    toast('Ad failed. Try again');
   }
 }
 
@@ -332,12 +326,11 @@ function nextLevel(){
 }
 
 document.getElementById('btnNew').onclick=()=>init(false);
-document.getElementById('btnDuel').onclick=()=>toast('Duel mode coming V4.9');
+document.getElementById('btnDuel').onclick=()=>toast('Duel coming soon');
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
-// INIT
 init();
 </script>
 </body>
