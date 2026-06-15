@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Rael Kertia Arena</title>
 <style>
-  :root{--bg:#0a0f1e; --text:#e5e7eb; --gold:#f59e0b}
+  :root{--bg:#0a0f1e; --text:#e5e7eb}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none}
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui; overflow:hidden}
 .wrap{height:100vh; display:flex; flex-direction:column}
@@ -13,17 +13,17 @@
 .logo{width:36px; height:36px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #4ade80}
 .hud{display:flex; gap:6px; font-size:12px}
 .pill{padding:4px 8px; background:#0f172a; border:1px solid #1f2937; border-radius:999px}
-.goal{font-size:12px; color:var(--gold); text-align:center; padding:6px; display:flex; gap:12px; justify-content:center}
+.goal{font-size:12px; color:#f59e0b; text-align:center; padding:6px; display:flex; gap:12px; justify-content:center}
 .timer{color:#ef4444; font-weight:700}
-.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px; position:relative}
+.boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:10px}
 .board{display:grid; grid-template-columns:repeat(8,1fr); gap:3px; width:min(96vw,500px); height:min(96vw,500px); max-height:60vh; background:#0b1222; padding:6px; border-radius:16px; border:1px solid #1f2937}
-.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
+.tile{border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
 .tile:active{transform:scale(.95)}
-/* Colors: Diamond White, Spades Blue, Hearts Red, Clovers Green */
-.suit-d{color:#ffffff; text-shadow:0 0 10px #fff}
-.suit-s{color:#3b82f6; text-shadow:0 0 10px #2563eb}
-.suit-h{color:#ef4444; text-shadow:0 0 10px #dc2626}
-.suit-c{color:#22c55e; text-shadow:0 0 10px #16a34a}
+/* WHOLE BLOCK COLORS - not just text */
+.suit-d{background:#ffffff; color:#0a0f1e} /* Diamond White block */
+.suit-s{background:#2563eb; color:#fff} /* Spades Blue block */
+.suit-h{background:#dc2626; color:#fff} /* Hearts Red block */
+.suit-c{background:#16a34a; color:#fff} /* Clovers Green block */
 .footer{display:flex; gap:6px; padding:8px; border-top:1px solid #1f2937; background:#0b1222}
   button{flex:1; padding:10px; border:none; border-radius:10px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937}
   button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
@@ -34,9 +34,6 @@
 .modal{position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:100}
 .modal.show{display:flex}
 .card{width:90vw; max-width:380px; background:#0b1222; border:1px solid #1f2937; border-radius:16px; padding:20px; text-align:center}
-.stars{font-size:32px; margin:10px 0}
-.btn-row{display:flex; gap:8px; margin-top:12px}
-.btn-row button{flex:1}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
@@ -44,7 +41,7 @@
 <div class="wrap">
   <header>
     <div style="display:flex; align-items:center; gap:8px">
-      <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen" onclick="openProfile()">
+      <img id="avatar" class="logo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sstephen">
       <div><div style="font-weight:700">Sstephen</div><div style="font-size:11px">Rank: <span id="rank">Bronze</span></div></div>
     </div>
     <div class="hud">
@@ -68,17 +65,13 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- END ROUND POPUP -->
 <div id="endModal" class="modal">
   <div class="card">
     <h2 id="endTitle">Round Complete!</h2>
-    <div class="stars" id="stars">⭐</div>
+    <div style="font-size:32px; margin:10px 0" id="stars">⭐</div>
     <div style="font-size:18px">Points: <span id="endPoints">0</span></div>
     <div style="font-size:12px; color:#9aa3b2" id="endTime">Time: 1:23</div>
-    <div class="btn-row">
-      <button class="primary" onclick="watchAdForDouble()">📺 Double Points</button>
-      <button onclick="shareResult()">📤 Share</button>
-    </div>
+    <button class="primary" onclick="watchAdForDouble()" style="width:100%; margin-top:12px">📺 Double Points</button>
     <button onclick="showAdThenNext()" style="width:100%; margin-top:8px">Watch Ad → Next Level</button>
   </div>
 </div>
@@ -87,7 +80,7 @@
 
 <script>
 const SIZE=8;
-const SUITS=[{s:'♦️',c:'suit-d',name:'diamond'},{s:'♠️',c:'suit-s',name:'spade'},{s:'♣️',c:'suit-c',name:'clover'},{s:'♥️',c:'suit-h',name:'heart'}];
+const SUITS=[{s:'♦️',c:'suit-d'},{s:'♠️',c:'suit-s'},{s:'♣️',c:'suit-c'},{s:'♥️',c:'suit-h'}];
 let grid=[], dragStart=null, lock=false;
 let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
 let goals={diamond:0, target:20}, level=1;
@@ -105,6 +98,7 @@ function getRank(score){
 }
 
 function init(newLevel=false){
+  lock=false; // FORCE UNLOCK ON NEW GAME
   if(newLevel) level++;
   points=0; moves=0; shuffles=10; goals={diamond:0, target:level<=3?20:100};
   timeLeft = level<=3?120:60;
@@ -135,42 +129,47 @@ function render(){
     tile.className='tile '+SUITS[grid[r][c]].c;
     tile.dataset.r=r; tile.dataset.c=c;
     tile.textContent=SUITS[grid[r][c]].s;
-    tile.addEventListener('touchstart', dragStartHandler);
-    tile.addEventListener('touchend', dragEndHandler);
-    tile.addEventListener('mousedown', dragStartHandler);
-    tile.addEventListener('mouseup', dragEndHandler);
+    // ADD BOTH MOUSE AND TOUCH EVENTS
+    tile.onmousedown = dragStartHandler;
+    tile.onmouseup = dragEndHandler;
+    tile.ontouchstart = dragStartHandler;
+    tile.ontouchend = dragEndHandler;
     board.appendChild(tile);
   }
 }
 
 function dragStartHandler(e){
+  e.preventDefault();
   if(lock) return;
   const t=e.target.closest('.tile');
   if(!t) return;
-  dragStart={r:+t.dataset.r, c:+t.dataset.c, x:e.touches?e.touches[0].clientX:e.clientX, y:e.touches?e.touches[0].clientY:e.clientY};
+  const x = e.touches?e.touches[0].clientX:e.clientX;
+  const y = e.touches?e.touches[0].clientY:e.clientY;
+  dragStart={r:+t.dataset.r, c:+t.dataset.c, x:x, y:y};
 }
 
 function dragEndHandler(e){
-  if(!dragStart || lock) return;
-  const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
-  const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+  e.preventDefault();
+  if(!dragStart || lock) { lock=false; dragStart=null; return } // FORCE UNLOCK
+  const x = e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+  const y = e.changedTouches?e.changedTouches[0].clientY:e.clientY;
   const dx=x-dragStart.x, dy=y-dragStart.y;
-  if(Math.abs(dx)<25 && Math.abs(dy)<25){ dragStart=null; return }
+  if(Math.abs(dx)<20 && Math.abs(dy)<20){ dragStart=null; return }
   let r2=dragStart.r, c2=dragStart.c;
   if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
-  if(r2<0||r2>=SIZE||c2<0||c2>=SIZE){ dragStart=null; return }
+  if(r2<0||r2>=SIZE||c2<0||c2>=SIZE){ lock=false; dragStart=null; return }
   trySwap(dragStart.r, dragStart.c, r2, c2);
   dragStart=null;
 }
 
 function trySwap(r1,c1,r2,c2){
-  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
+  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) { lock=false; return }
   swap(r1,c1,r2,c2);
   const matches=findMatches();
   if(matches.length===0){
     swap(r1,c1,r2,c2);
     toast('No match');
-    lock=false;
+    lock=false; // UNLOCK HERE
     return
   }
   lock=true; moves++;
@@ -197,15 +196,15 @@ async function resolve(matches){
     document.getElementById('sndMatch').play().catch(()=>{});
 
     matches.forEach(([r,c])=>{
-      if(SUITS[grid[r][c]].name==='diamond') goals.diamond++;
+      if(SUITS[grid[r][c]].s==='♦️') goals.diamond++;
       grid[r][c]=-1;
     });
 
-    render(); await sleep(150);
-    collapse(); fill(); render(); await sleep(150);
+    render(); await sleep(120);
+    collapse(); fill(); render(); await sleep(120);
     matches=findMatches(); combo++;
   }
-  lock=false;
+  lock=false; // UNLOCK AFTER ALL RESOLVES
 }
 
 function collapse(){
@@ -238,7 +237,6 @@ function updateHUD(){
   document.getElementById('shuffleCount').textContent='('+shuffles+')';
   document.getElementById('rank').textContent=getRank(points);
   const mins=Math.floor(timeLeft/60), secs=timeLeft%60;
-  document.getElementById('timer').textContent=`${mins}:${secs.toString().padStart(2,'0')}`;
   document.getElementById('goalBar').innerHTML=`
     <span>${goals.diamond}/${goals.target} ♦️</span>
     <span class="timer" id="timer">${mins}:${secs.toString().padStart(2,'0')}</span>
@@ -288,7 +286,7 @@ document.getElementById('btnShuffle').onclick=async()=>{
     updateHUD();
     toast('+5 shuffles added');
   } catch(e){
-    toast('Ad failed. Try again');
+    toast('Ad failed');
   }
 }
 
@@ -314,19 +312,14 @@ async function showAdThenNext(){
   toast('Watch ad for next level...');
   try{
     await show_11148292();
-    nextLevel();
+    document.getElementById('endModal').classList.remove('show');
+    init(true);
   } catch(e){
-    toast('Ad failed. Try again');
+    toast('Ad failed');
   }
 }
 
-function nextLevel(){
-  document.getElementById('endModal').classList.remove('show');
-  init(true);
-}
-
 document.getElementById('btnNew').onclick=()=>init(false);
-document.getElementById('btnDuel').onclick=()=>toast('Duel coming soon');
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
