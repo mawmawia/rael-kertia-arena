@@ -51,6 +51,7 @@
 .difficulty{font-size:10px; color:#f59e0b; margin-top:4px}
 .dailyReward{font-size:28px; margin:10px 0; animation:bounce 0.6s ease}
 @keyframes bounce{0%,100%{transform:scale(1)} 50%{transform:scale(1.2)}}
+.highscore{font-size:14px; color:#fbbf24; margin:8px 0}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
@@ -61,7 +62,7 @@
       <img class="logo" id="userPic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest">
       <div class="profile-info">
         <div class="name"><span id="userName">Guest</span></div>
-        <div class="rank">Rank: <span id="rank">Bronze</span> | Wins: <span id="wins">0</span></div>
+        <div class="rank">Rank: <span id="rank">Elite</span> | Wins: <span id="wins">0</span></div>
       </div>
     </div>
     <div class="hud">
@@ -71,7 +72,7 @@
   </header>
 
   <div class="goal" id="goalBar">
-    <span>0/20 ♦️</span><span class="timer" id="timer">2:00</span><span>Moves:0</span>
+    <span>0/20 ♦️</span><span class="timer" id="timer"></span><span>Moves:0</span>
   </div>
 
   <div class="boardWrap"><div id="board" class="board"></div></div>
@@ -103,7 +104,6 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- DAILY LOGIN REWARD MODAL -->
 <div id="dailyModal" class="modal">
   <div class="card">
     <h2>🎁 Daily Bonus!</h2>
@@ -123,7 +123,7 @@
       <button class="primary" onclick="watchAdForDouble()">📺 Double Points</button>
       <button onclick="nextRound()">➡️ Next Round</button>
       <button onclick="playAgain()">🔄 Play Again</button>
-      <button onclick="shareReport()">📤 Challenge Friend</button>
+      <button onclick="shareReport()">📤 Beat My Highscore!</button>
     </div>
   </div>
 </div>
@@ -132,7 +132,9 @@
   <div class="card">
     <img id="profilePic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest" style="width:64px;border-radius:50%;margin-bottom:8px">
     <h2 id="profileName">Guest</h2>
-    <p>Rank: <span id="profileRank">Bronze</span></p>
+    <p>Rank: <span id="profileRank">Elite</span></p>
+    <p class="highscore">Best: <span id="highScore">0</span> pts</p>
+    <p class="highscore">Best Rank: <span id="bestRank">Elite</span></p>
     <p>Wins: <span id="profileWins">0</span></p>
     <p style="font-size:10px; color:#666" id="profileId"></p>
     <button onclick="closeModal('profileModal')" style="width:100%;margin-top:12px">Close</button>
@@ -142,6 +144,7 @@
 <div id="duelModal" class="modal">
   <div class="card">
     <h2>⚔️ Ghost Duel</h2>
+    <div style="font-size:10px;color:#666;margin-bottom:8px">Real PvP coming Day 5. This is practice mode.</div>
     <div id="duelDiffText" class="difficulty"></div>
     <table class="duelTable" id="duelTable">
       <tr><td>Opponent</td><td>Result</td><td>Score</td></tr>
@@ -168,8 +171,9 @@ tg.expand();
 const SIZE=8;
 const SUITS=[{s:'♦️',c:'suit-d'},{s:'♠️',c:'suit-s'},{s:'♣️',c:'suit-c'},{s:'♥️',c:'suit-h'}];
 let grid=[], dragStart=null, lock=false;
-let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
+let points=0, shuffles=10, moves=0, timer=null, timeLeft=0;
 let goals={diamond:0, target:20}, level=1;
+let hasTimeLimit=false;
 
 // USER + STORAGE
 const user = tg.initDataUnsafe.user;
@@ -185,51 +189,76 @@ if(user){
 
 let wins = parseInt(localStorage.getItem('rka_wins') || '0');
 let duelHistory = JSON.parse(localStorage.getItem('rka_duels') || '[]');
+let highScore = parseInt(localStorage.getItem('rka_highScore') || '0');
+let bestRank = localStorage.getItem('rka_bestRank') || 'Elite';
+
 document.getElementById('wins').textContent = wins;
 document.getElementById('profileWins').textContent = wins;
+document.getElementById('highScore').textContent = highScore;
+document.getElementById('bestRank').textContent = bestRank;
 updateDuelDifficulty();
 
-// DAILY LOGIN REWARD SYSTEM
+// DAILY LOGIN
 function checkDailyReward(){
   const lastLogin = localStorage.getItem('rka_lastLogin');
   const today = new Date().toDateString();
-
   if(lastLogin!== today){
-    // First time today - give reward
     points += 50;
     localStorage.setItem('rka_lastLogin', today);
     localStorage.setItem('rka_points', points);
-
-    // Show modal after 1 second so game loads first
-    setTimeout(()=>{
-      document.getElementById('dailyModal').classList.add('show');
-    }, 1000);
-
+    setTimeout(()=>document.getElementById('dailyModal').classList.add('show'), 1000);
     updateHUD();
   }
 }
 
-// Save points on exit
-window.addEventListener('beforeunload', ()=>{
-  localStorage.setItem('rka_points', points);
-});
+window.addEventListener('beforeunload', ()=>localStorage.setItem('rka_points', points));
+points = parseInt(localStorage.getItem('rka_points') || '0');
 
-// Load saved points
-const savedPoints = parseInt(localStorage.getItem('rka_points') || '0');
-points = savedPoints;
+// GET TARGET BY LEVEL
+function getTarget(level){
+  if(level <= 3) return 20;
+  if(level <= 6) return 50;
+  return 100;
+}
+
+function hasTimer(level){
+  return level >= 10; // Timer starts round 10
+}
+
+// NEW RANK SYSTEM
+function getRank(score){
+  if(score >= 1500) return 'Mythic';
+  if(score >= 500) return 'Legend';
+  if(score >= 100) return 'Grandmaster';
+  if(score >= 10) return 'Master';
+  return 'Elite';
+}
+
+function updateBestRank(score){
+  const rank = getRank(score);
+  const ranks = ['Elite','Master','Grandmaster','Legend','Mythic'];
+  if(ranks.indexOf(rank) > ranks.indexOf(bestRank)){
+    bestRank = rank;
+    localStorage.setItem('rka_bestRank', bestRank);
+    document.getElementById('bestRank').textContent = bestRank;
+  }
+}
 
 // GAME CORE
 function init(newLevel=false){
   lock=false;
   if(newLevel) level++;
-  points=0; moves=0; shuffles=10; goals={diamond:0, target:level<=3?20:100};
-  timeLeft = level<=3?120:60;
+
+  points=0; moves=0; shuffles=10;
+  goals={diamond:0, target:getTarget(level)};
+  hasTimeLimit = hasTimer(level);
+  timeLeft = hasTimeLimit? 120 : 0; // 2min only after round 10
 
   grid=Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>Math.floor(Math.random()*4)));
   removeMatches();
   render();
   updateHUD();
-  startTimer();
+  if(hasTimeLimit) startTimer();
 }
 
 function removeMatches(){
@@ -326,7 +355,13 @@ async function resolve(matches){
   while(matches.length>0){
     const pts=matches.length*10*combo;
     points+=pts;
-    localStorage.setItem('rka_points', points); // Save progress
+    localStorage.setItem('rka_points', points);
+    if(points > highScore){
+      highScore = points;
+      localStorage.setItem('rka_highScore', highScore);
+      document.getElementById('highScore').textContent = highScore;
+      updateBestRank(highScore);
+    }
     addPop(pts);
     document.getElementById('sndMatch').play().catch(()=>{});
 
@@ -366,28 +401,24 @@ function addPop(v){
   setTimeout(()=>pop.remove(), 600);
 }
 
-function getRank(score){
-  if(score>=100000) return 'Mythic '+Math.max(1,1000-Math.floor(score/100));
-  if(score>=50000) return 'Mythic';
-  if(score>=25000) return 'Legend';
-  if(score>=10000) return 'Grandmaster';
-  if(score>=5000) return 'Master';
-  if(score>=1000) return 'Elite';
-  if(score>=500) return 'Gold';
-  if(score>=100) return 'Silver';
-  return 'Bronze';
-}
-
 function updateHUD(){
   document.getElementById('points').textContent=points;
   document.getElementById('shuffles').textContent=shuffles;
   document.getElementById('shuffleCount').textContent='('+shuffles+')';
   document.getElementById('rank').textContent=getRank(points);
   document.getElementById('profileRank').textContent=getRank(points);
-  const mins=Math.floor(timeLeft/60), secs=timeLeft%60;
+
+  let timerText = '';
+  if(hasTimeLimit){
+    const mins=Math.floor(timeLeft/60), secs=timeLeft%60;
+    timerText = `<span class="timer" id="timer">${mins}:${secs.toString().padStart(2,'0')}</span>`;
+  } else {
+    timerText = `<span style="color:#22c55e">No Timer</span>`;
+  }
+
   document.getElementById('goalBar').innerHTML=`
     <span>${goals.diamond}/${goals.target} ♦️</span>
-    <span class="timer" id="timer">${mins}:${secs.toString().padStart(2,'0')}</span>
+    ${timerText}
     <span>Moves:${moves}</span>
   `;
 }
@@ -404,30 +435,121 @@ function startTimer(){
   },1000);
 }
 
-function endRound(win){
+async function endRound(win){
   clearInterval(timer);
   lock=true;
-  const starsWin = win? (timeLeft>60?3: timeLeft>30?2:1) : 0;
-  const totalTime = level<=3?120:60;
-  const usedTime = totalTime - timeLeft;
+
+  // AUTO AD BEFORE POPUP - as you requested
+  toast('Watch ad for bonus...');
+  try{
+    await safeShowAd();
+    toast('Ad watched! Opening report...');
+  } catch(e){
+    toast('Ad skipped');
+  }
+
+  const starsWin = win? 3 : 0;
+  const totalTime = hasTimeLimit? 120 : 0;
+  const usedTime = hasTimeLimit? totalTime - timeLeft : 0;
   const mins=Math.floor(usedTime/60), secs=usedTime%60;
 
   document.getElementById('endTitle').textContent= win?'🎉 Round Complete!':'💀 Time Up!';
   document.getElementById('endModalStars').textContent='⭐'.repeat(starsWin)+'☆'.repeat(3-starsWin);
   document.getElementById('endPoints').textContent=points;
-  document.getElementById('endTime').textContent=`Time: ${mins}:${secs.toString().padStart(2,'0')} | L${level}`;
+  document.getElementById('endTime').textContent= hasTimeLimit?
+    `Time: ${mins}:${secs.toString().padStart(2,'0')} | L${level}` :
+    `Level ${level} Complete | Moves:${moves}`;
   document.getElementById('endModal').classList.add('show');
 }
 
-// DYNAMIC SHARE BRAG
+// FIXED AD DOUBLE - Popup stays, points double live
+async function watchAdForDouble(){
+  try{
+    await safeShowAd();
+    points*=2;
+    localStorage.setItem('rka_points', points);
+    if(points > highScore){
+      highScore = points;
+      localStorage.setItem('rka_highScore', highScore);
+      document.getElementById('highScore').textContent = highScore;
+      updateBestRank(highScore);
+    }
+    document.getElementById('endPoints').textContent=points;
+    toast('Points doubled! x2');
+    // Don't close popup, let user see doubled points
+    setTimeout(()=>{
+      closeModal('endModal');
+      init(true);
+    }, 1500);
+  } catch(e){
+    toast('Ad failed');
+  }
+}
+
+function nextRound(){
+  closeModal('endModal');
+  setTimeout(()=>init(true), 100);
+}
+
+function playAgain(){
+  closeModal('endModal');
+  setTimeout(()=>init(false), 100);
+}
+
+// SHAREABLE HIGH SCORE
 function shareReport(){
   closeModal('endModal');
-  const rank = getRank(points);
-  const text = `I just hit ${points} points in Rael Kertia Arena! I'm ranked ${rank}. Can you do better? 🚀`;
+  const rank = getRank(highScore);
+  const text = `I just hit ${highScore} points - Rank ${rank} in Rael Kertia Arena! Beat my highscore 🚀`;
   tg.switchInlineQuery(text, ['users', 'groups', 'channels']);
 }
 
-// GHOST DUEL PROGRESSION
+// SAFE ADS
+async function safeShowAd(){
+  if(typeof show_11148292 === 'function'){
+    console.log('Ad started');
+    return await show_11148292();
+  } else {
+    toast('Ad loading...');
+    return Promise.reject('SDK not ready');
+  }
+}
+
+document.getElementById('btnShuffle').onclick=async()=>{
+  if(shuffles>0){
+    shuffles--;
+    shuffleBoard();
+    updateHUD();
+    return;
+  }
+  toast('Watch ad for +5 shuffles...');
+  try{
+    await safeShowAd();
+    shuffles=5;
+    shuffleBoard();
+    updateHUD();
+    toast('+5 shuffles added');
+  } catch(e){
+    toast('Ad failed');
+  }
+}
+
+function shuffleBoard(){
+  let flat=grid.flat();
+  do{ flat.sort(()=>Math.random()-0.5); let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)grid[r][c]=flat[i++] }
+  while(findMatches().length>0);
+  render();
+}
+
+// GHOST DUEL
+const ghostOpponents = [
+  {name:'ShadowFox', score:Math.floor(Math.random()*2000)+500},
+  {name:'IceWolf', score:Math.floor(Math.random()*2000)+500},
+  {name:'ThunderCat', score:Math.floor(Math.random()*2000)+500},
+  {name:'BlazeEagle', score:Math.floor(Math.random()*2000)+500},
+  {name:'NightOwl', score:Math.floor(Math.random()*2000)+500}
+];
+
 function getDuelDifficulty(){
   const tier = Math.floor(wins / 5);
   if(tier >= 4) return {name:'Boss', multiplier:3.0};
@@ -447,9 +569,7 @@ function startGhostDuel(){
   const diff = getDuelDifficulty();
   const baseScore = Math.floor(Math.random()*1500)+500;
   const opponentScore = Math.floor(baseScore * diff.multiplier);
-
-  const opponentNames = ['ShadowFox','IceWolf','ThunderCat','BlazeEagle','NightOwl','VoidSerpent','StormRaven','IronTiger'];
-  const opponent = opponentNames[Math.floor(Math.random()*opponentNames.length)];
+  const opponent = ghostOpponents[Math.floor(Math.random()*ghostOpponents.length)].name;
 
   const win = points > opponentScore;
 
@@ -497,67 +617,7 @@ function renderDuelTable(){
   });
 }
 
-// BUTTONS
-function nextRound(){
-  closeModal('endModal');
-  setTimeout(()=>init(true), 100);
-}
-
-function playAgain(){
-  closeModal('endModal');
-  setTimeout(()=>init(false), 100);
-}
-
-async function watchAdForDouble(){
-  try{
-    await safeShowAd();
-    points*=2;
-    localStorage.setItem('rka_points', points);
-    document.getElementById('endPoints').textContent=points;
-    toast('Points doubled! x2');
-    closeModal('endModal');
-    setTimeout(()=>init(true), 300);
-  } catch(e){
-    toast('Ad failed');
-  }
-}
-
-async function safeShowAd(){
-  if(typeof show_11148292 === 'function'){
-    console.log('Ad started');
-    return await show_11148292();
-  } else {
-    toast('Ad loading...');
-    return Promise.reject('SDK not ready');
-  }
-}
-
-document.getElementById('btnShuffle').onclick=async()=>{
-  if(shuffles>0){
-    shuffles--;
-    shuffleBoard();
-    updateHUD();
-    return;
-  }
-  toast('Watch ad for +5 shuffles...');
-  try{
-    await safeShowAd();
-    shuffles=5;
-    shuffleBoard();
-    updateHUD();
-    toast('+5 shuffles added');
-  } catch(e){
-    toast('Ad failed');
-  }
-}
-
-function shuffleBoard(){
-  let flat=grid.flat();
-  do{ flat.sort(()=>Math.random()-0.5); let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)grid[r][c]=flat[i++] }
-  while(findMatches().length>0);
-  render();
-}
-
+// UI
 function closeModal(id){
   document.getElementById(id).classList.remove('show');
 }
@@ -588,7 +648,7 @@ document.getElementById('btnDuel').onclick=()=>showTab('duel');
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
-// INIT + DAILY REWARD CHECK
+// INIT
 init();
 checkDailyReward();
 </script>
