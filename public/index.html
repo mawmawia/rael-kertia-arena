@@ -176,16 +176,21 @@ button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
 </div>
 
 <script>
-// 1. SUPABASE CONFIG - Replace with your keys
+// ERROR CATCHER
+window.onerror = function(msg, url, line) {
+  alert('JS ERROR: ' + msg + ' Line:' + line);
+}
+
+// 1. SUPABASE CONFIG
 const SUPABASE_URL = 'https://iyjydmwwtpodkztinmvz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5anlkbXd3dHBvZGt6dGlubXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTcwMDksImV4cCI6MjA5NzE3MzAwOX0.F0haBMVkorGTAdwlq3oXaUuvaGSTyW7DK3y-W3IgACE'; // Paste anon public key here
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5anlkbXd3dHBvZGt6dGlubXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTcwMDksImV4cCI6MjA5NzE3MzAwOX0.F0haBMVkorGTAdwlq3oXaUuvaGSTyW7DK3y-W3IgACE';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const tg = window.Telegram.WebApp; tg.expand();
 
 // 2. GAME STATE
 const gameState = {
-userId: tg.initDataUnsafe.user?.id || Math.random(),
+userId: tg.initDataUnsafe.user?.id || Math.floor(Math.random()*999),
 userName: tg.initDataUnsafe.user?.first_name || 'Guest',
 points: 0,
 coins: 100,
@@ -205,7 +210,7 @@ const SIZE = 8;
 const SUITS = [{s:'♦️',c:'suit-d',t:'diamond'},{s:'♠️',c:'suit-s',t:'spade'},{s:'♣️',c:'suit-c',t:'club'},{s:'♥️',c:'suit-h',t:'heart'}];
 let grid = [], drag = null, lock = false, selectedSkill = null, timer = null;
 
-// 3. SUPABASE SYNC - Load player data on start
+// 3. SUPABASE SYNC
 async function initializePlayer() {
 const user = tg.initDataUnsafe.user;
 if (!user) return;
@@ -213,16 +218,14 @@ if (!user) return;
 document.getElementById('userName').textContent = user.first_name;
 if(user.photo_url) document.getElementById('userPic').src = user.photo_url;
 
-// Fetch existing data
-let { data, error } = await supabase
+let { data, error } = await supabaseClient
 .from('user_stats')
 .select('*')
 .eq('user_id', user.id)
 .single();
 
 if (error && error.code === 'PGRST116') {
-// New user - create row
-await supabase.from('user_stats').insert({
+await supabaseClient.from('user_stats').insert({
 user_id: user.id,
 username: user.first_name,
 high_score: 0,
@@ -237,12 +240,10 @@ gameState.bestRank = getRank(gameState.highScore);
 }
 }
 
-// 4. SAVE GAME TO SUPABASE
 async function saveGame() {
 const user = tg.initDataUnsafe.user;
 if (!user) return;
-
-await supabase.from('user_stats').upsert({
+await supabaseClient.from('user_stats').upsert({
 user_id: user.id,
 username: gameState.userName,
 high_score: gameState.highScore,
@@ -252,7 +253,7 @@ updated_at: new Date()
 });
 }
 
-// 5. GAME LOGIC - Same as before
+// 4. GAME LOGIC
 function init(newLevel = false){
 if(newLevel) gameState.level++;
 const task = getTask(gameState.level);
@@ -271,13 +272,13 @@ if(gameState.hasTimer) startTimer();
 
 function getTask(lvl){
 const c = (lvl-1)%7, m = Math.floor((lvl-1)/4)+1;
-if(c===0) return {d:100m,s:0,c:0,h:0,mv:0};
-if(c===1) return {d:0,s:200m,c:0,h:0,mv:0};
-if(c===2) return {d:0,s:0,c:300m,h:0,mv:0};
-if(c===3) return {d:0,s:0,c:0,h:400m,mv:0};
-if(c===4) return {d:100m,s:0,c:100m,h:0,mv:30};
-if(c===5) return {d:200m,s:0,c:0,h:100m,mv:30};
-return {d:200m,s:300m,c:0,h:0,mv:30};
+if(c===0) return {d:100*m,s:0,c:0,h:0,mv:0};
+if(c===1) return {d:0,s:200*m,c:0,h:0,mv:0};
+if(c===2) return {d:0,s:0,c:300*m,h:0,mv:0};
+if(c===3) return {d:0,s:0,c:0,h:400*m,mv:0};
+if(c===4) return {d:100*m,s:0,c:100*m,h:0,mv:30};
+if(c===5) return {d:200*m,s:0,c:0,h:100*m,mv:30};
+return {d:200*m,s:300*m,c:0,h:0,mv:30};
 }
 
 function getRank(score){
@@ -296,8 +297,6 @@ changed = false; tries++;
 for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
 if(c>=2 && grid[r][c]==grid[r][c-1] && grid[r][c]==grid[r][c-2]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
 if(r>=2 && grid[r][c]==grid[r-1][c] && grid[r][c]==grid[r-2][c]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
-}
-}
 }
 
 function render(){
@@ -361,7 +360,7 @@ gameState.goals[SUITS[grid[r][c]].t]++;
 grid[r][c] = -1;
 }
 });
-gameState.points += matches.length10combo; combo++;
+gameState.points += matches.length*10*combo; combo++;
 if(gameState.points>gameState.highScore){
 gameState.highScore = gameState.points;
 gameState.bestRank = getRank(gameState.points);
@@ -386,13 +385,13 @@ document.getElementById('levelBadge').textContent = gameState.level;
 
 const task = getTask(gameState.level);
 let goals = [];
-if(task.d) goals.push(${gameState.goals.diamond}/${task.d} ♦️);
-if(task.s) goals.push(${gameState.goals.spade}/${task.s} ♠️);
-if(task.c) goals.push(${gameState.goals.club}/${task.c} ♣️);
-if(task.h) goals.push(${gameState.goals.heart}/${task.h} ♥️);
+if(task.d) goals.push(`${gameState.goals.diamond}/${task.d} ♦️`);
+if(task.s) goals.push(`${gameState.goals.spade}/${task.s} ♠️`);
+if(task.c) goals.push(`${gameState.goals.club}/${task.c} ♣️`);
+if(task.h) goals.push(`${gameState.goals.heart}/${task.h} ♥️`);
 
-let timerTxt = gameState.hasTimer? <span class="timer"&gt;${Math.floor(gameState.timeLeft/60)}:${(gameState.timeLeft%60).toString().padStart(2,'0')}&lt;/span> : '<span style="color:#22c55e">No Timer</span>';
-let mvTxt = gameState.movesLeft>0? <span style="color:#fbbf24"&gt;${gameState.movesLeft} moves</span>` : '';
+let timerTxt = gameState.hasTimer? `<span class="timer">${Math.floor(gameState.timeLeft/60)}:${(gameState.timeLeft%60).toString().padStart(2,'0')}</span>` : '<span style="color:#22c55e">No Timer</span>';
+let mvTxt = gameState.movesLeft>0? `<span style="color:#fbbf24">${gameState.movesLeft} moves</span>` : '';
 document.getElementById('goalBar').innerHTML = goals.join(' ') + ' + timerTxt + ' + mvTxt;
 
 ['laser','ufo','bomb','sickle'].forEach(k => {
@@ -417,7 +416,7 @@ await saveGame();
 
 document.getElementById('endTitle').textContent = win? '🎉 Complete!' : '💀 Failed';
 document.getElementById('endPoints').textContent = pts;
-document.getElementById('endInfo').textContent = gameState.hasTimer? Time:${Math.floor((120-gameState.timeLeft)/60)}: {gameState.moves} | +${Math.floor(pts/100)} coins;
+document.getElementById('endInfo').textContent = gameState.hasTimer? `Time:${Math.floor((120-gameState.timeLeft)/60)}:${((120-gameState.timeLeft)%60).toString().padStart(2,'0')}` : `Moves: ${gameState.moves} | +${Math.floor(pts/100)} coins`;
 showModal('endModal');
 }
 
@@ -426,7 +425,6 @@ if(typeof show_11148292 === 'function') return await show_11148292();
 toast('Ad loading...'); return Promise.reject();
 }
 
-// 6. BUTTON ACTIONS + STORE
 async function watchAdForDouble(){
 await triggerAd();
 gameState.points *= 2;
@@ -494,13 +492,12 @@ function nextRound(){closeModal(); init(true)}
 function playAgain(){closeModal(); init(false)}
 
 function shareScore(){
-const text = I scored${gameState.highScore} pts - Rank  {gameState.level} in Rael Kertia Arena! Beat me 🚀`;
+const text = `I scored ${gameState.highScore} pts - Rank ${gameState.bestRank} at Level ${gameState.level} in Rael Kertia Arena! Beat me 🚀`;
 tg.switchInlineQuery(text, ['users','groups']);
 }
 
-// 7. GHOST DUEL - Pull random player from Supabase
 async function startGhostDuel(){
-const { data, error } = await supabase
+const { data, error } = await supabaseClient
 .from('user_stats')
 .select('username, high_score')
 .neq('user_id', gameState.userId)
@@ -517,16 +514,15 @@ const opponent = data[0];
 const win = gameState.points > opponent.high_score;
 if(win) gameState.coins += 50;
 await saveGame();
-toast(win?You beat ${opponent.username} with ${opponent.high_score} pts! +50 coins:Lost to ${opponent.username} - ${opponent.high_score} pts);
+toast(win?`You beat ${opponent.username} with ${opponent.high_score} pts! +50 coins`:`Lost to ${opponent.username} - ${opponent.high_score} pts`);
 closeModal();
 }
 
-// 8. LEADERBOARD - Pull top 10 from Supabase
 async function renderLeaderboard(){
 const list = document.getElementById('leaderboardList');
 list.innerHTML = 'Loading...';
 
-const { data, error } = await supabase
+const { data, error } = await supabaseClient
 .from('user_stats')
 .select('username, high_score, level')
 .order('high_score', {ascending: false})
@@ -538,9 +534,10 @@ return;
 }
 
 list.innerHTML = data.map((p,i) =>
-<div class="leaderboard-row ${p.username===gameState.userName?'me':''}">
+`<div class="leaderboard-row ${p.username===gameState.userName?'me':''}">
 <span>#${i+1} ${p.username}</span>
-<span>${p.high_score} pts - Lvl ${p.level}&lt;/span&gt; &lt;/div>
+<span>${p.high_score} pts - Lvl ${p.level}</span>
+</div>`
 ).join('');
 }
 
