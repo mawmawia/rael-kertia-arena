@@ -178,10 +178,11 @@ button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
 <script>
 // ERROR CATCHER
 window.onerror = function(msg, url, line) {
-  alert('JS ERROR: ' + msg + ' Line:' + line);
+  console.error('JS ERROR:', msg, 'Line:', line);
+  alert('ERROR: ' + msg + ' Line:' + line);
 }
 
-// 1. SUPABASE CONFIG
+// 1. SUPABASE CONFIG - Your keys
 const SUPABASE_URL = 'https://iyjydmwwtpodkztinmvz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5anlkbXd3dHBvZGt6dGlubXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTcwMDksImV4cCI6MjA5NzE3MzAwOX0.F0haBMVkorGTAdwlq3oXaUuvaGSTyW7DK3y-W3IgACE';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -218,6 +219,7 @@ if (!user) return;
 document.getElementById('userName').textContent = user.first_name;
 if(user.photo_url) document.getElementById('userPic').src = user.photo_url;
 
+try {
 let { data, error } = await supabaseClient
 .from('user_stats')
 .select('*')
@@ -238,11 +240,16 @@ gameState.coins = data.coins || 100;
 gameState.level = data.level || 1;
 gameState.bestRank = getRank(gameState.highScore);
 }
+} catch(e) {
+console.error('Supabase load error:', e);
+toast('Offline mode');
+}
 }
 
 async function saveGame() {
 const user = tg.initDataUnsafe.user;
 if (!user) return;
+try {
 await supabaseClient.from('user_stats').upsert({
 user_id: user.id,
 username: gameState.userName,
@@ -251,6 +258,9 @@ coins: gameState.coins,
 level: gameState.level,
 updated_at: new Date()
 });
+} catch(e) {
+console.error('Save error:', e);
+}
 }
 
 // 4. GAME LOGIC
@@ -392,7 +402,7 @@ if(task.h) goals.push(`${gameState.goals.heart}/${task.h} ♥️`);
 
 let timerTxt = gameState.hasTimer? `<span class="timer">${Math.floor(gameState.timeLeft/60)}:${(gameState.timeLeft%60).toString().padStart(2,'0')}</span>` : '<span style="color:#22c55e">No Timer</span>';
 let mvTxt = gameState.movesLeft>0? `<span style="color:#fbbf24">${gameState.movesLeft} moves</span>` : '';
-document.getElementById('goalBar').innerHTML = goals.join(' ') + ' + timerTxt + ' + mvTxt;
+document.getElementById('goalBar').innerHTML = goals.join(' ') + timerTxt + mvTxt;
 
 ['laser','ufo','bomb','sickle'].forEach(k => {
 document.getElementById('count'+k[0].toUpperCase()+k.slice(1)).textContent = gameState.skills[k];
@@ -497,6 +507,7 @@ tg.switchInlineQuery(text, ['users','groups']);
 }
 
 async function startGhostDuel(){
+try {
 const { data, error } = await supabaseClient
 .from('user_stats')
 .select('username, high_score')
@@ -516,12 +527,16 @@ if(win) gameState.coins += 50;
 await saveGame();
 toast(win?`You beat ${opponent.username} with ${opponent.high_score} pts! +50 coins`:`Lost to ${opponent.username} - ${opponent.high_score} pts`);
 closeModal();
+} catch(e) {
+toast('Network error');
+}
 }
 
 async function renderLeaderboard(){
 const list = document.getElementById('leaderboardList');
 list.innerHTML = 'Loading...';
 
+try {
 const { data, error } = await supabaseClient
 .from('user_stats')
 .select('username, high_score, level')
@@ -539,6 +554,9 @@ list.innerHTML = data.map((p,i) =>
 <span>${p.high_score} pts - Lvl ${p.level}</span>
 </div>`
 ).join('');
+} catch(e) {
+list.innerHTML = 'Network error';
+}
 }
 
 function showModal(id){
