@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Rael Kertia Arena</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="//libtl.com/sdk.js" data-zone="11148292" data-sdk="show_11148292"></script>
 <style>
@@ -42,7 +43,6 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .footer{display:flex; gap:6px; padding:8px; background:var(--nav)}
 button{flex:1; padding:9px; border:none; border-radius:8px; background:#111827; color:var(--text); font-weight:700; border:1px solid #1f2937; font-size:12px}
 button.primary{background:linear-gradient(180deg,#16a34a,#15803d)}
-button.danger{background:#dc2626}
 .toast{position:fixed; bottom:75px; left:50%; transform:translateX(-50%); background:#0f172a; border:1px solid #1f2937; padding:8px 12px; border-radius:999px; opacity:0; transition:.2s; z-index:999; font-size:11px}
 .toast.show{opacity:1}
 .modal{position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:100}
@@ -57,457 +57,515 @@ button.danger{background:#dc2626}
 <body>
 <div class="wrap">
 <header>
-  <div class="profile" onclick="showModal('profileModal')">
-    <img class="logo" id="userPic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest">
-    <div class="info">
-      <div><span id="userName">Guest</span> <span class="levelBadge">L<span id="levelBadge">1</span></span></div>
-      <div style="font-size:9px; color:#9aa3b2">Rank: <span id="rank">Elite</span></div>
-    </div>
-  </div>
-  <div class="hud">
-    <div class="pill">🏆<span id="points">0</span></div>
-    <div class="pill">💰<span id="coins">0</span></div>
-    <div class="pill">🔄<span id="shuffles">10</span></div>
-  </div>
+<div class="profile" onclick="showModal('profileModal')">
+<img class="logo" id="userPic" src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest">
+<div class="info">
+<div><span id="userName">Guest</span> <span class="levelBadge">L<span id="levelBadge">1</span></span></div>
+<div style="font-size:9px; color:#9aa3b2">Rank: <span id="rank">Elite</span></div>
+</div>
+</div>
+<div class="hud">
+<div class="pill">🏆<span id="points">0</span></div>
+<div class="pill">💰<span id="coins">0</span></div>
+<div class="pill">🔄<span id="shuffles">10</span></div>
+</div>
 </header>
 
 <div class="goal" id="goalBar"></div>
 
 <div class="boardWrap">
-  <div id="board" class="board"></div>
-  <div class="skillBar">
-    <div class="skillBtn" id="skillLaser" onclick="useSkill('laser')">⚡<div class="skillCount" id="countLaser">0</div></div>
-    <div class="skillBtn" id="skillUfo" onclick="useSkill('ufo')">🛸<div class="skillCount" id="countUfo">0</div></div>
-    <div class="skillBtn" id="skillBomb" onclick="useSkill('bomb')">💣<div class="skillCount" id="countBomb">0</div></div>
-    <div class="skillBtn" id="skillSickle" onclick="useSkill('sickle')">🔪<div class="skillCount" id="countSickle">0</div></div>
-  </div>
+<div id="board" class="board"></div>
+<div class="skillBar">
+<div class="skillBtn" id="skillLaser" onclick="useSkill('laser')">⚡<div class="skillCount" id="countLaser">0</div></div>
+<div class="skillBtn" id="skillUfo" onclick="useSkill('ufo')">🛸<div class="skillCount" id="countUfo">0</div></div>
+<div class="skillBtn" id="skillBomb" onclick="useSkill('bomb')">💣<div class="skillCount" id="countBomb">0</div></div>
+<div class="skillBtn" id="skillSickle" onclick="useSkill('sickle')">🔪<div class="skillCount" id="countSickle">0</div></div>
+</div>
 </div>
 
 <div class="footer">
-  <button class="primary" onclick="useShuffle()">🔄 Shuffle <span id="shuffleCount">(10)</span></button>
-  <button onclick="showModal('leaderboardModal')">🏆 Top</button>
+<button class="primary" onclick="useShuffle()">🔄 Shuffle <span id="shuffleCount">(10)</span></button>
+<button onclick="showModal('leaderboardModal')">🏆 Top</button>
 </div>
 
 <div class="bottomNav">
-  <button class="navBtn active" onclick="closeModal()">Play</button>
-  <button class="navBtn" onclick="showModal('duelModal')">⚔️ Duel</button>
-  <button class="navBtn" onclick="showModal('leaderboardModal')">🏆 Top</button>
-  <button class="navBtn" onclick="showModal('storeModal')">🛒 Store</button>
+<button class="navBtn active" onclick="closeModal()">Play</button>
+<button class="navBtn" onclick="showModal('duelModal')">⚔️ Duel</button>
+<button class="navBtn" onclick="showModal('leaderboardModal')">🏆 Top</button>
+<button class="navBtn" onclick="showModal('storeModal')">🛒 Store</button>
 </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
 <div id="endModal" class="modal">
-  <div class="card">
-    <h2 id="endTitle">Round Complete!</h2>
-    <div style="font-size:28px; margin:10px 0" id="endStars">⭐</div>
-    <div style="font-size:18px">Points: <span id="endPoints">0</span></div>
-    <div style="font-size:11px; color:#9aa3b2" id="endInfo"></div>
-    <div class="action-grid">
-      <button class="primary" onclick="watchAdForDouble()">📺 Double</button>
-      <button onclick="nextRound()">Next</button>
-      <button onclick="playAgain()">Retry</button>
-      <button onclick="shareScore()">Share</button>
-    </div>
-  </div>
+<div class="card">
+<h2 id="endTitle">Round Complete!</h2>
+<div style="font-size:28px; margin:10px 0" id="endStars">⭐</div>
+<div style="font-size:18px">Points: <span id="endPoints">0</span></div>
+<div style="font-size:11px; color:#9aa3b2" id="endInfo"></div>
+<div class="action-grid">
+<button class="primary" onclick="watchAdForDouble()">📺 Double</button>
+<button onclick="nextRound()">Next</button>
+<button onclick="playAgain()">Retry</button>
+<button onclick="shareScore()">Share</button>
+</div>
+</div>
 </div>
 
 <div id="movesModal" class="modal">
-  <div class="card">
-    <h2>⚠️ Out of Moves!</h2>
-    <p>Watch ad for +10 moves or buy with coins?</p>
-    <button class="primary" onclick="watchAdForMoves()" style="width:100%">📺 +10 Moves Free</button>
-    <button onclick="buyMoves()" style="width:100%;margin-top:6px">💰 Buy 10 Moves - 50 Coins</button>
-    <button onclick="playAgain()" style="width:100%;margin-top:6px">Retry Level</button>
-  </div>
+<div class="card">
+<h2>⚠️ Out of Moves!</h2>
+<p>Watch ad for +10 moves or buy with coins?</p>
+<button class="primary" onclick="watchAdForMoves()" style="width:100%">📺 +10 Moves Free</button>
+<button onclick="buyMoves()" style="width:100%;margin-top:6px">💰 Buy 10 Moves - 50 Coins</button>
+<button onclick="playAgain()" style="width:100%;margin-top:6px">Retry Level</button>
+</div>
 </div>
 
 <div id="profileModal" class="modal">
-  <div class="card">
-    <h2 id="profileName">Guest</h2>
-    <p>Best Score: <span id="bestScore">0</span></p>
-    <p>Best Rank: <span id="bestRank">Elite</span></p>
-    <p>Level: <span id="profileLevel">1</span> | Coins: <span id="profileCoins">0</span></p>
-    <button onclick="closeModal()" style="width:100%;margin-top:12px">Close</button>
-  </div>
+<div class="card">
+<h2 id="profileName">Guest</h2>
+<p>Best Score: <span id="bestScore">0</span></p>
+<p>Best Rank: <span id="bestRank">Elite</span></p>
+<p>Level: <span id="profileLevel">1</span> | Coins: <span id="profileCoins">0</span></p>
+<button onclick="closeModal()" style="width:100%;margin-top:12px">Close</button>
+</div>
 </div>
 
 <div id="leaderboardModal" class="modal">
-  <div class="card">
-    <h2>🏆 Leaderboard</h2>
-    <p style="font-size:10px; color:#666">Local scores - Global coming Day 5</p>
-    <div id="leaderboardList" style="margin-top:12px"></div>
-    <button onclick="closeModal()" style="width:100%;margin-top:12px">Close</button>
-  </div>
+<div class="card">
+<h2>🏆 Leaderboard</h2>
+<p style="font-size:10px; color:#666">Global - Supabase Live</p>
+<div id="leaderboardList" style="margin-top:12px">Loading...</div>
+<button onclick="closeModal()" style="width:100%;margin-top:12px">Close</button>
+</div>
 </div>
 
 <div id="storeModal" class="modal">
-  <div class="card">
-    <h2>🛒 Store</h2>
-    <p style="font-size:10px; color:#9aa3b2">Coins: <span id="storeCoins">0</span></p>
-    <div class="shop-item">
-      <span>🔄 +5 Shuffles</span>
-      <button onclick="buyShuffles()">50 Coins</button>
-    </div>
-    <div class="shop-item">
-      <span>⚡ +1 Laser Skill</span>
-      <button onclick="buySkill('laser')">100 Coins</button>
-    </div>
-    <div class="shop-item">
-      <span>🛸 +1 UFO Skill</span>
-      <button onclick="buySkill('ufo')">200 Coins</button>
-    </div>
-    <div class="shop-item">
-      <span>📺 Watch Ad +100 Coins</span>
-      <button class="primary" onclick="watchAdForCoins()">Free</button>
-    </div>
-    <button onclick="closeModal()" style="width:100%;margin-top:12px">Close</button>
-  </div>
+<div class="card">
+<h2>🛒 Store</h2>
+<p style="font-size:10px; color:#9aa3b2">Coins: <span id="storeCoins">0</span></p>
+<div class="shop-item">
+<span>🔄 +5 Shuffles</span>
+<button onclick="buyShuffles()">50 Coins</button>
+</div>
+<div class="shop-item">
+<span>⚡ +1 Laser Skill</span>
+<button onclick="buySkill('laser')">100 Coins</button>
+</div>
+<div class="shop-item">
+<span>🛸 +1 UFO Skill</span>
+<button onclick="buySkill('ufo')">200 Coins</button>
+</div>
+<div class="shop-item">
+<span>📺 Watch Ad +100 Coins</span>
+<button class="primary" onclick="watchAdForCoins()">Free</button>
+</div>
+<button onclick="closeModal()" style="width:100%;margin-top:12px">Close</button>
+</div>
 </div>
 
 <div id="duelModal" class="modal">
-  <div class="card">
-    <h2>⚔️ Ghost Duel</h2>
-    <p style="font-size:10px;color:#666">Practice vs AI. Real PvP Day 6 with backend</p>
-    <button class="primary" onclick="startGhostDuel()" style="width:100%">Start Duel</button>
-    <button onclick="closeModal()" style="width:100%;margin-top:8px">Close</button>
-  </div>
+<div class="card">
+<h2>⚔️ Ghost Duel</h2>
+<p style="font-size:10px;color:#666">Fight random player's best score</p>
+<button class="primary" onclick="startGhostDuel()" style="width:100%">Start Duel</button>
+<button onclick="closeModal()" style="width:100%;margin-top:8px">Close</button>
+</div>
 </div>
 
 <script>
+// 1. SUPABASE CONFIG - Replace with your keys
+const SUPABASE_URL = 'https://iyjydmwwtpodkztinmvz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5anlkbXd3dHBvZGt6dGlubXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTcwMDksImV4cCI6MjA5NzE3MzAwOX0.F0haBMVkorGTAdwlq3oXaUuvaGSTyW7DK3y-W3IgACE'; // Paste anon public key here
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const tg = window.Telegram.WebApp; tg.expand();
 
-// GAME STATE - modular structure
+// 2. GAME STATE
 const gameState = {
-  userId: tg.initDataUnsafe.user?.id || 'guest_' + Math.random(),
-  userName: tg.initDataUnsafe.user?.first_name || 'Guest',
-  points: 0,
-  coins: parseInt(localStorage.getItem('rka_coins_' + tg.initDataUnsafe.user?.id) || '100'),
-  level: 1,
-  highScore: parseInt(localStorage.getItem('rka_best_' + tg.initDataUnsafe.user?.id) || '0'),
-  bestRank: 'Elite',
-  shuffles: 10,
-  skills: {laser: 0, ufo: 0, bomb: 0, sickle: 0},
-  goals: {diamond: 0, spade: 0, club: 0, heart: 0},
-  moves: 0,
-  movesLeft: 0,
-  hasTimer: false,
-  timeLeft: 0
+userId: tg.initDataUnsafe.user?.id || Math.random(),
+userName: tg.initDataUnsafe.user?.first_name || 'Guest',
+points: 0,
+coins: 100,
+level: 1,
+highScore: 0,
+bestRank: 'Elite',
+shuffles: 10,
+skills: {laser: 0, ufo: 0, bomb: 0, sickle: 0},
+goals: {diamond: 0, spade: 0, club: 0, heart: 0},
+moves: 0,
+movesLeft: 0,
+hasTimer: false,
+timeLeft: 0
 };
 
 const SIZE = 8;
 const SUITS = [{s:'♦️',c:'suit-d',t:'diamond'},{s:'♠️',c:'suit-s',t:'spade'},{s:'♣️',c:'suit-c',t:'club'},{s:'♥️',c:'suit-h',t:'heart'}];
 let grid = [], drag = null, lock = false, selectedSkill = null, timer = null;
 
-// INIT
-function init(newLevel = false){
-  if(newLevel) gameState.level++;
-  const task = getTask(gameState.level);
-  Object.keys(gameState.goals).forEach(k => gameState.goals[k] = 0);
-  gameState.points = 0; gameState.moves = 0; gameState.shuffles = 10;
-  gameState.movesLeft = task.mv;
-  gameState.hasTimer = gameState.level % 10 === 0;
-  gameState.timeLeft = gameState.hasTimer? 120 : 0;
+// 3. SUPABASE SYNC - Load player data on start
+async function initializePlayer() {
+const user = tg.initDataUnsafe.user;
+if (!user) return;
 
-  grid = Array.from({length:SIZE}, () => Array.from({length:SIZE}, () => Math.floor(Math.random()*4)));
-  removeMatches();
-  render();
-  updateUI();
-  if(gameState.hasTimer) startTimer();
-  saveGame();
+document.getElementById('userName').textContent = user.first_name;
+if(user.photo_url) document.getElementById('userPic').src = user.photo_url;
+
+// Fetch existing data
+let { data, error } = await supabase
+.from('user_stats')
+.select('*')
+.eq('user_id', user.id)
+.single();
+
+if (error && error.code === 'PGRST116') {
+// New user - create row
+await supabase.from('user_stats').insert({
+user_id: user.id,
+username: user.first_name,
+high_score: 0,
+coins: 100,
+level: 1
+});
+} else if (data) {
+gameState.highScore = data.high_score || 0;
+gameState.coins = data.coins || 100;
+gameState.level = data.level || 1;
+gameState.bestRank = getRank(gameState.highScore);
+}
+}
+
+// 4. SAVE GAME TO SUPABASE
+async function saveGame() {
+const user = tg.initDataUnsafe.user;
+if (!user) return;
+
+await supabase.from('user_stats').upsert({
+user_id: user.id,
+username: gameState.userName,
+high_score: gameState.highScore,
+coins: gameState.coins,
+level: gameState.level,
+updated_at: new Date()
+});
+}
+
+// 5. GAME LOGIC - Same as before
+function init(newLevel = false){
+if(newLevel) gameState.level++;
+const task = getTask(gameState.level);
+Object.keys(gameState.goals).forEach(k => gameState.goals[k] = 0);
+gameState.points = 0; gameState.moves = 0; gameState.shuffles = 10;
+gameState.movesLeft = task.mv;
+gameState.hasTimer = gameState.level % 10 === 0;
+gameState.timeLeft = gameState.hasTimer? 120 : 0;
+
+grid = Array.from({length:SIZE}, () => Array.from({length:SIZE}, () => Math.floor(Math.random()*4)));
+removeMatches();
+render();
+updateUI();
+if(gameState.hasTimer) startTimer();
 }
 
 function getTask(lvl){
-  const c = (lvl-1)%7, m = Math.floor((lvl-1)/4)+1;
-  if(c===0) return {d:100*m,s:0,c:0,h:0,mv:0};
-  if(c===1) return {d:0,s:200*m,c:0,h:0,mv:0};
-  if(c===2) return {d:0,s:0,c:300*m,h:0,mv:0};
-  if(c===3) return {d:0,s:0,c:0,h:0,h:400*m,mv:0};
-  if(c===4) return {d:100*m,s:0,c:100*m,h:0,mv:30};
-  if(c===5) return {d:200*m,s:0,c:0,h:100*m,mv:30};
-  return {d:200*m,s:300*m,c:0,h:0,mv:30};
+const c = (lvl-1)%7, m = Math.floor((lvl-1)/4)+1;
+if(c===0) return {d:100m,s:0,c:0,h:0,mv:0};
+if(c===1) return {d:0,s:200m,c:0,h:0,mv:0};
+if(c===2) return {d:0,s:0,c:300m,h:0,mv:0};
+if(c===3) return {d:0,s:0,c:0,h:400m,mv:0};
+if(c===4) return {d:100m,s:0,c:100m,h:0,mv:30};
+if(c===5) return {d:200m,s:0,c:0,h:100m,mv:30};
+return {d:200m,s:300m,c:0,h:0,mv:30};
 }
 
 function getRank(score){
-  if(score>=10000001) return 'Mythic 1';
-  if(score>=1000001) return 'Mythic';
-  if(score>=500001) return 'Legend';
-  if(score>=100001) return 'Grandmaster';
-  if(score>=50001) return 'Master';
-  return 'Elite';
+if(score>=10000001) return 'Mythic 1';
+if(score>=1000001) return 'Mythic';
+if(score>=500001) return 'Legend';
+if(score>=100001) return 'Grandmaster';
+if(score>=50001) return 'Master';
+return 'Elite';
 }
 
-function saveGame(){
-  localStorage.setItem('rka_coins_' + gameState.userId, gameState.coins);
-  localStorage.setItem('rka_best_' + gameState.userId, gameState.highScore);
-  localStorage.setItem('rka_level_' + gameState.userId, gameState.level);
-}
-
-// GAME LOGIC
 function removeMatches(){
-  let changed = true, tries = 0;
-  while(changed && tries<50){
-    changed = false; tries++;
-    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
-      if(c>=2 && grid[r][c]==grid[r][c-1] && grid[r][c]==grid[r][c-2]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
-      if(r>=2 && grid[r][c]==grid[r-1][c] && grid[r][c]==grid[r-2][c]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
-    }
-  }
+let changed = true, tries = 0;
+while(changed && tries<50){
+changed = false; tries++;
+for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+if(c>=2 && grid[r][c]==grid[r][c-1] && grid[r][c]==grid[r][c-2]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
+if(r>=2 && grid[r][c]==grid[r-1][c] && grid[r][c]==grid[r-2][c]){grid[r][c]=Math.floor(Math.random()*4); changed=true}
+}
+}
 }
 
 function render(){
-  const b = document.getElementById('board'); b.innerHTML = '';
-  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
-    const cell = grid[r][c], tile = document.createElement('div');
-    if(cell==-1) tile.className = 'tile empty';
-    else if(cell.skill){tile.className = 'tile skill-'+cell.skill; tile.textContent = cell.skill==='laser'?'⚡':cell.skill==='ufo'?'🛸':'💣'; tile.onclick = () => useSkillTile(r,c)}
-    else{tile.className = 'tile '+SUITS[cell].c; tile.textContent = SUITS[cell].s}
-    tile.dataset.r = r; tile.dataset.c = c;
-    tile.onmousedown = tile.ontouchstart = dragStart;
-    tile.onmouseup = tile.ontouchend = dragEnd;
-    b.appendChild(tile);
-  }
+const b = document.getElementById('board'); b.innerHTML = '';
+for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+const cell = grid[r][c], tile = document.createElement('div');
+if(cell==-1) tile.className = 'tile empty';
+else if(cell.skill){tile.className = 'tile skill-'+cell.skill; tile.textContent = cell.skill==='laser'?'⚡':cell.skill==='ufo'?'🛸':'💣'; tile.onclick = () => useSkillTile(r,c)}
+else{tile.className = 'tile '+SUITS[cell].c; tile.textContent = SUITS[cell].s}
+tile.dataset.r = r; tile.dataset.c = c;
+tile.onmousedown = tile.ontouchstart = dragStart;
+tile.onmouseup = tile.ontouchend = dragEnd;
+b.appendChild(tile);
+}
 }
 
 function dragStart(e){
-  if(lock || selectedSkill) return;
-  const t = e.target.closest('.tile'); if(!t) return;
-  const x = e.touches?e.touches[0].clientX:e.clientX;
-  const y = e.touches?e.touches[0].clientY:e.clientY;
-  drag = {r:+t.dataset.r, c:+t.dataset.c, x, y}
+if(lock || selectedSkill) return;
+const t = e.target.closest('.tile'); if(!t) return;
+const x = e.touches?e.touches[0].clientX:e.clientX;
+const y = e.touches?e.touches[0].clientY:e.clientY;
+drag = {r:+t.dataset.r, c:+t.dataset.c, x, y}
 }
 
 function dragEnd(e){
-  if(!drag || selectedSkill) return;
-  const x = e.changedTouches?e.changedTouches[0].clientX:e.clientX;
-  const y = e.changedTouches?e.changedTouches[0].clientY:e.clientY;
-  const dx = x-drag.x, dy = y-drag.y;
-  if(Math.abs(dx)<20 && Math.abs(dy)<20){drag=null; return}
-  let r2 = drag.r, c2 = drag.c;
-  if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
-  if(r2>=0 && r2<SIZE && c2>=0 && c2<SIZE) swap(drag.r,drag.c,r2,c2);
-  drag = null;
+if(!drag || selectedSkill) return;
+const x = e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+const y = e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+const dx = x-drag.x, dy = y-drag.y;
+if(Math.abs(dx)<20 && Math.abs(dy)<20){drag=null; return}
+let r2 = drag.r, c2 = drag.c;
+if(Math.abs(dx)>Math.abs(dy)) c2 += dx>0?1:-1; else r2 += dy>0?1:-1;
+if(r2>=0 && r2<SIZE && c2>=0 && c2<SIZE) swap(drag.r,drag.c,r2,c2);
+drag = null;
 }
 
 function swap(r1,c1,r2,c2){
-  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
-  [grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]];
-  const matches = findMatches();
-  if(!matches.length){[grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]]; toast('No match'); return}
-  gameState.moves++; if(gameState.movesLeft>0) gameState.movesLeft--;
-  resolve(matches);
-  updateUI();
-  setTimeout(()=>{if(checkWin()) endRound(true); else if(gameState.movesLeft===0 && getTask(gameState.level).mv>0){clearInterval(timer); showModal('movesModal')}},200);
+if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
+[grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]];
+const matches = findMatches();
+if(!matches.length){[grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]]; toast('No match'); return}
+gameState.moves++; if(gameState.movesLeft>0) gameState.movesLeft--;
+resolve(matches);
+updateUI();
+setTimeout(()=>{if(checkWin()) endRound(true); else if(gameState.movesLeft===0 && getTask(gameState.level).mv>0){clearInterval(timer); showModal('movesModal')}},200);
 }
 
 function findMatches(){
-  const m = new Set();
-  for(let r=0;r<SIZE;r++){let c=0; while(c<SIZE){let s=c; while(c<SIZE&&grid[r][c]==grid[r][s])c++; if(c-s>=3)for(let k=s;k<c;k++)m.add(r+','+k)}}
-  for(let c=0;c<SIZE;c++){let r=0; while(r<SIZE){let s=r; while(r<SIZE&&grid[r][c]==grid[s][c])r++; if(r-s>=3)for(let k=s;k<r;k++)m.add(k+','+c)}}
-  return Array.from(m).map(s=>s.split(',').map(Number));
+const m = new Set();
+for(let r=0;r<SIZE;r++){let c=0; while(c<SIZE){let s=c; while(c<SIZE&&grid[r][c]==grid[r][s])c++; if(c-s>=3)for(let k=s;k<c;k++)m.add(r+','+k)}}
+for(let c=0;c<SIZE;c++){let r=0; while(r<SIZE){let s=r; while(r<SIZE&&grid[r][c]==grid[s][c])r++; if(r-s>=3)for(let k=s;k<r;k++)m.add(k+','+c)}}
+return Array.from(m).map(s=>s.split(',').map(Number));
 }
 
 async function resolve(matches){
-  let combo=1;
-  while(matches.length){
-    matches.forEach(([r,c])=>{
-      if(typeof grid[r][c]==='number'){
-        gameState.goals[SUITS[grid[r][c]].t]++;
-        grid[r][c] = -1;
-      }
-    });
-    gameState.points += matches.length*10*combo; combo++;
-    if(gameState.points>gameState.highScore){
-      gameState.highScore = gameState.points;
-      gameState.bestRank = getRank(gameState.points);
-    }
-    render(); await sleep(80); collapse(); fill(); render(); await sleep(80);
-    matches = findMatches();
-  }
-  lock = false;
+let combo=1;
+while(matches.length){
+matches.forEach(([r,c])=>{
+if(typeof grid[r][c]==='number'){
+gameState.goals[SUITS[grid[r][c]].t]++;
+grid[r][c] = -1;
+}
+});
+gameState.points += matches.length10combo; combo++;
+if(gameState.points>gameState.highScore){
+gameState.highScore = gameState.points;
+gameState.bestRank = getRank(gameState.points);
+}
+render(); await sleep(80); collapse(); fill(); render(); await sleep(80);
+matches = findMatches();
+}
+lock = false;
 }
 
 function collapse(){for(let c=0;c<SIZE;c++){let w=SIZE-1; for(let r=SIZE-1;r>=0;r--)if(grid[r][c]>=0){grid[w][c]=grid[r][c]; w--} for(let r=w;r>=0;r--)grid[r][c]=-1}}
 function fill(){for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(grid[r][c]==-1)grid[r][c]=Math.floor(Math.random()*4)}
 function checkWin(){const t=getTask(gameState.level); return gameState.goals.diamond>=t.d&&gameState.goals.spade>=t.s&&gameState.goals.club>=t.c&&gameState.goals.heart>=t.h}
 
-// UI UPDATES
 function updateUI(){
-  document.getElementById('points').textContent = gameState.points;
-  document.getElementById('coins').textContent = gameState.coins;
-  document.getElementById('shuffles').textContent = gameState.shuffles;
-  document.getElementById('shuffleCount').textContent = '('+gameState.shuffles+')';
-  document.getElementById('rank').textContent = getRank(gameState.points);
-  document.getElementById('levelBadge').textContent = gameState.level;
+document.getElementById('points').textContent = gameState.points;
+document.getElementById('coins').textContent = gameState.coins;
+document.getElementById('shuffles').textContent = gameState.shuffles;
+document.getElementById('shuffleCount').textContent = '('+gameState.shuffles+')';
+document.getElementById('rank').textContent = getRank(gameState.points);
+document.getElementById('levelBadge').textContent = gameState.level;
 
-  const task = getTask(gameState.level);
-  let goals = [];
-  if(task.d) goals.push(`${gameState.goals.diamond}/${task.d} ♦️`);
-  if(task.s) goals.push(`${gameState.goals.spade}/${task.s} ♠️`);
-  if(task.c) goals.push(`${gameState.goals.club}/${task.c} ♣️`);
-  if(task.h) goals.push(`${gameState.goals.heart}/${task.h} ♥️`);
+const task = getTask(gameState.level);
+let goals = [];
+if(task.d) goals.push(${gameState.goals.diamond}/${task.d} ♦️);
+if(task.s) goals.push(${gameState.goals.spade}/${task.s} ♠️);
+if(task.c) goals.push(${gameState.goals.club}/${task.c} ♣️);
+if(task.h) goals.push(${gameState.goals.heart}/${task.h} ♥️);
 
-  let timerTxt = gameState.hasTimer? `<span class="timer">${Math.floor(gameState.timeLeft/60)}:${(gameState.timeLeft%60).toString().padStart(2,'0')}</span>` : '<span style="color:#22c55e">No Timer</span>';
-  let mvTxt = gameState.movesLeft>0? `<span style="color:#fbbf24">${gameState.movesLeft} moves</span>` : '';
-  document.getElementById('goalBar').innerHTML = goals.join(' ') + ' + timerTxt + ' + mvTxt;
+let timerTxt = gameState.hasTimer? <span class="timer"&gt;${Math.floor(gameState.timeLeft/60)}:${(gameState.timeLeft%60).toString().padStart(2,'0')}&lt;/span> : '<span style="color:#22c55e">No Timer</span>';
+let mvTxt = gameState.movesLeft>0? <span style="color:#fbbf24"&gt;${gameState.movesLeft} moves</span>` : '';
+document.getElementById('goalBar').innerHTML = goals.join(' ') + ' + timerTxt + ' + mvTxt;
 
-  ['laser','ufo','bomb','sickle'].forEach(k => {
-    document.getElementById('count'+k[0].toUpperCase()+k.slice(1)).textContent = gameState.skills[k];
-    document.getElementById('skill'+k[0].toUpperCase()+k.slice(1)).classList.toggle('has', gameState.skills[k]>0);
-    document.getElementById('skill'+k[0].toUpperCase()+k.slice(1)).classList.toggle('selected', selectedSkill===k);
-  });
+['laser','ufo','bomb','sickle'].forEach(k => {
+document.getElementById('count'+k[0].toUpperCase()+k.slice(1)).textContent = gameState.skills[k];
+document.getElementById('skill'+k[0].toUpperCase()+k.slice(1)).classList.toggle('has', gameState.skills[k]>0);
+document.getElementById('skill'+k[0].toUpperCase()+k.slice(1)).classList.toggle('selected', selectedSkill===k);
+});
 }
 
 function startTimer(){
-  clearInterval(timer);
-  timer = setInterval(()=>{gameState.timeLeft--; updateUI(); if(gameState.timeLeft<=0){clearInterval(timer); showModal('movesModal')}},1000);
+clearInterval(timer);
+timer = setInterval(()=>{gameState.timeLeft--; updateUI(); if(gameState.timeLeft<=0){clearInterval(timer); showModal('movesModal')}},1000);
 }
 
 async function endRound(win){
-  clearInterval(timer); lock = true;
-  await triggerAd();
-  let pts = gameState.points; if(gameState.hasTimer) pts *= 2;
-  if(pts>gameState.highScore) gameState.highScore = pts;
-  gameState.coins += Math.floor(pts/100);
-  saveGame();
+clearInterval(timer); lock = true;
+await triggerAd();
+let pts = gameState.points; if(gameState.hasTimer) pts *= 2;
+if(pts>gameState.highScore) gameState.highScore = pts;
+gameState.coins += Math.floor(pts/100);
+await saveGame();
 
-  document.getElementById('endTitle').textContent = win? '🎉 Complete!' : '💀 Failed';
-  document.getElementById('endPoints').textContent = pts;
-  document.getElementById('endInfo').textContent = gameState.hasTimer? `Time: ${Math.floor((120-gameState.timeLeft)/60)}:${((120-gameState.timeLeft)%60).toString().padStart(2,'0')}` : `Moves: ${gameState.moves} | +${Math.floor(pts/100)} coins`;
-  showModal('endModal');
+document.getElementById('endTitle').textContent = win? '🎉 Complete!' : '💀 Failed';
+document.getElementById('endPoints').textContent = pts;
+document.getElementById('endInfo').textContent = gameState.hasTimer? Time:${Math.floor((120-gameState.timeLeft)/60)}: {gameState.moves} | +${Math.floor(pts/100)} coins;
+showModal('endModal');
 }
 
-// ADS WRAPPER
 async function triggerAd(){
-  if(typeof show_11148292 === 'function') return await show_11148292();
-  toast('Ad loading...'); return Promise.reject();
+if(typeof show_11148292 === 'function') return await show_11148292();
+toast('Ad loading...'); return Promise.reject();
 }
 
-// BUTTON ACTIONS
+// 6. BUTTON ACTIONS + STORE
 async function watchAdForDouble(){
-  await triggerAd();
-  gameState.points *= 2;
-  document.getElementById('endPoints').textContent = gameState.points;
-  toast('x2 Points!');
-  setTimeout(()=>{closeModal(); saveGame(); init(true)},1000);
+await triggerAd();
+gameState.points *= 2;
+document.getElementById('endPoints').textContent = gameState.points;
+toast('x2 Points!');
+setTimeout(()=>{closeModal(); saveGame(); init(true)},1000);
 }
 
 async function watchAdForMoves(){
-  await triggerAd();
-  gameState.movesLeft += 10; closeModal(); startTimer(); toast('+10 moves');
+await triggerAd();
+gameState.movesLeft += 10; closeModal(); startTimer(); toast('+10 moves');
 }
 
 async function watchAdForCoins(){
-  await triggerAd();
-  gameState.coins += 100; saveGame(); updateUI();
-  document.getElementById('storeCoins').textContent = gameState.coins;
-  toast('+100 coins!');
+await triggerAd();
+gameState.coins += 100; await saveGame(); updateUI();
+document.getElementById('storeCoins').textContent = gameState.coins;
+toast('+100 coins!');
 }
 
 function buyMoves(){
-  if(gameState.coins<50){toast('Not enough coins'); return}
-  gameState.coins -= 50; gameState.movesLeft += 10; saveGame(); closeModal(); startTimer(); updateUI();
+if(gameState.coins<50){toast('Not enough coins'); return}
+gameState.coins -= 50; gameState.movesLeft += 10; saveGame(); closeModal(); startTimer(); updateUI();
 }
 
 function buyShuffles(){
-  if(gameState.coins<50){toast('Not enough coins'); return}
-  gameState.coins -= 50; gameState.shuffles += 5; saveGame(); updateUI(); toast('+5 shuffles');
+if(gameState.coins<50){toast('Not enough coins'); return}
+gameState.coins -= 50; gameState.shuffles += 5; saveGame(); updateUI(); toast('+5 shuffles');
 }
 
 function buySkill(type){
-  const cost = type==='laser'?100:type==='ufo'?200:300;
-  if(gameState.coins<cost){toast('Not enough coins'); return}
-  gameState.coins -= cost; gameState.skills[type]++; saveGame(); updateUI(); toast('+1 '+type);
+const cost = type==='laser'?100:type==='ufo'?200:300;
+if(gameState.coins<cost){toast('Not enough coins'); return}
+gameState.coins -= cost; gameState.skills[type]++; saveGame(); updateUI(); toast('+1 '+type);
 }
 
 function useShuffle(){
-  if(gameState.shuffles>0){
-    gameState.shuffles--;
-    let flat = grid.flat().sort(()=>Math.random()-0.5);
-    let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)grid[r][c]=flat[i++];
-    render(); updateUI(); return;
-  }
-  triggerAd().then(()=>{gameState.shuffles=5; toast('+5 shuffles')}).catch(()=>toast('Ad failed'));
+if(gameState.shuffles>0){
+gameState.shuffles--;
+let flat = grid.flat().sort(()=>Math.random()-0.5);
+let i=0; for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)grid[r][c]=flat[i++];
+render(); updateUI(); return;
+}
+triggerAd().then(()=>{gameState.shuffles=5; toast('+5 shuffles')}).catch(()=>toast('Ad failed'));
 }
 
 function useSkill(type){
-  if(gameState.skills[type]<=0){toast('No '+type); return}
-  selectedSkill = selectedSkill===type?null:type;
-  updateUI();
-  toast(selectedSkill?'Tap tile':'Deselected');
+if(gameState.skills[type]<=0){toast('No '+type); return}
+selectedSkill = selectedSkill===type?null:type;
+updateUI();
+toast(selectedSkill?'Tap tile':'Deselected');
 }
 
 function useSkillTile(r,c){
-  if(!selectedSkill) return;
-  gameState.skills[selectedSkill]--;
-  if(selectedSkill==='laser'){for(let i=0;i<SIZE;i++){grid[r][i]=-1; grid[i][c]=-1}}
-  if(selectedSkill==='ufo'){const s=grid[r][c]; for(let i=0;i<SIZE;i++)for(let j=0;j<SIZE;j++)if(grid[i][j]===s)grid[i][j]=-1}
-  if(selectedSkill==='bomb'){for(let i=0;i<SIZE;i++)for(let j=0;j<SIZE;j++)grid[i][j]=-1}
-  if(selectedSkill==='sickle'){grid[r][c]=-1}
-  selectedSkill=null; updateUI(); render(); setTimeout(()=>{collapse(); fill(); render()},150);
+if(!selectedSkill) return;
+gameState.skills[selectedSkill]--;
+if(selectedSkill==='laser'){for(let i=0;i<SIZE;i++){grid[r][i]=-1; grid[i][c]=-1}}
+if(selectedSkill==='ufo'){const s=grid[r][c]; for(let i=0;i<SIZE;i++)for(let j=0;j<SIZE;j++)if(grid[i][j]===s)grid[i][j]=-1}
+if(selectedSkill==='bomb'){for(let i=0;i<SIZE;i++)for(let j=0;j<SIZE;j++)grid[i][j]=-1}
+if(selectedSkill==='sickle'){grid[r][c]=-1}
+selectedSkill=null; updateUI(); render(); setTimeout(()=>{collapse(); fill(); render()},150);
 }
 
 function nextRound(){closeModal(); init(true)}
 function playAgain(){closeModal(); init(false)}
 
 function shareScore(){
-  const text = `I scored ${gameState.highScore} pts - Rank ${gameState.bestRank} at Level ${gameState.level} in Rael Kertia Arena! Beat me 🚀`;
-  tg.switchInlineQuery(text, ['users','groups']);
+const text = I scored${gameState.highScore} pts - Rank  {gameState.level} in Rael Kertia Arena! Beat me 🚀`;
+tg.switchInlineQuery(text, ['users','groups']);
 }
 
-function startGhostDuel(){
-  const oppScore = Math.floor(Math.random()*2000)+500;
-  const win = gameState.points > oppScore;
-  if(win) gameState.coins += 50;
-  saveGame();
-  toast(win?`You won vs ${oppScore} pts! +50 coins`:`Lost vs ${oppScore} pts`);
-  closeModal();
+// 7. GHOST DUEL - Pull random player from Supabase
+async function startGhostDuel(){
+const { data, error } = await supabase
+.from('user_stats')
+.select('username, high_score')
+.neq('user_id', gameState.userId)
+.gt('high_score', 0)
+.order('high_score', {ascending: false})
+.limit(1);
+
+if(error ||!data || data.length===0){
+toast('No opponents yet. Be the first!');
+return;
+}
+
+const opponent = data[0];
+const win = gameState.points > opponent.high_score;
+if(win) gameState.coins += 50;
+await saveGame();
+toast(win?You beat ${opponent.username} with ${opponent.high_score} pts! +50 coins:Lost to ${opponent.username} - ${opponent.high_score} pts);
+closeModal();
+}
+
+// 8. LEADERBOARD - Pull top 10 from Supabase
+async function renderLeaderboard(){
+const list = document.getElementById('leaderboardList');
+list.innerHTML = 'Loading...';
+
+const { data, error } = await supabase
+.from('user_stats')
+.select('username, high_score, level')
+.order('high_score', {ascending: false})
+.limit(10);
+
+if(error ||!data){
+list.innerHTML = 'Error loading leaderboard';
+return;
+}
+
+list.innerHTML = data.map((p,i) =>
+<div class="leaderboard-row ${p.username===gameState.userName?'me':''}">
+<span>#${i+1} ${p.username}</span>
+<span>${p.high_score} pts - Lvl ${p.level}&lt;/span&gt; &lt;/div>
+).join('');
 }
 
 function showModal(id){
-  document.getElementById(id).classList.add('show');
-  if(id==='profileModal'){
-    document.getElementById('userName').textContent = gameState.userName;
-    document.getElementById('profileName').textContent = gameState.userName;
-    document.getElementById('bestScore').textContent = gameState.highScore;
-    document.getElementById('bestRank').textContent = gameState.bestRank;
-    document.getElementById('profileLevel').textContent = gameState.level;
-    document.getElementById('profileCoins').textContent = gameState.coins;
-  }
-  if(id==='storeModal'){
-    document.getElementById('storeCoins').textContent = gameState.coins;
-  }
-  if(id==='leaderboardModal'){
-    renderLeaderboard();
-  }
+document.getElementById(id).classList.add('show');
+if(id==='profileModal'){
+document.getElementById('bestScore').textContent = gameState.highScore;
+document.getElementById('bestRank').textContent = gameState.bestRank;
+document.getElementById('profileLevel').textContent = gameState.level;
+document.getElementById('profileCoins').textContent = gameState.coins;
+}
+if(id==='storeModal'){
+document.getElementById('storeCoins').textContent = gameState.coins;
+}
+if(id==='leaderboardModal'){
+renderLeaderboard();
+}
 }
 
 function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show'))}
-
-function renderLeaderboard(){
-  const list = document.getElementById('leaderboardList');
-  const scores = JSON.parse(localStorage.getItem('rka_lb') || '[]');
-  scores.push({name: gameState.userName, score: gameState.highScore, rank: gameState.bestRank});
-  scores.sort((a,b)=>b.score-a.score);
-  const top10 = scores.slice(0,10);
-  localStorage.setItem('rka_lb', JSON.stringify(top10));
-
-  list.innerHTML = top10.map((p,i) =>
-    `<div class="leaderboard-row ${p.name===gameState.userName?'me':''}">
-      <span>#${i+1} ${p.name}</span>
-      <span>${p.score} pts - ${p.rank}</span>
-    </div>`
-  ).join('');
-}
-
 function toast(msg){const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200)}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 // START
-document.getElementById('userName').textContent = gameState.userName;
-if(tg.initDataUnsafe.user?.photo_url) document.getElementById('userPic').src = tg.initDataUnsafe.user.photo_url;
-init();
+initializePlayer().then(()=>init());
 </script>
 </body>
-      </html>
+</html>
