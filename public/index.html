@@ -22,8 +22,8 @@
 .timer{color:#ef4444; font-weight:700}
 .boardWrap{flex:1; display:flex; align-items:center; justify-content:center; padding:8px}
 .board{display:grid; grid-template-columns:repeat(8, 1fr); gap:2px; width:min(98vw, 480px); height:min(98vw, 480px); max-height:55vh; background:#0b1222; padding:5px; border-radius:14px; border:1px solid #1f2937}
-.tile{border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:min(5.5vw,26px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s}
-.tile:active{transform:scale(.92)}
+.tile{border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:min(5.5vw,26px); font-weight:900; background:#1a2333; border:1px solid #2d3748; touch-action:none; cursor:pointer; transition:transform.1s, box-shadow.1s}
+.tile:active{transform:scale(1.05); box-shadow:0 0 15px rgba(74,222,128,0.6)}
 .tile.empty{background:#0b1222; border:1px dashed #1f2937}
 .suit-d{background:#ffffff; color:#0a0f1e}
 .suit-s{background:#3b82f6; color:#fff}
@@ -48,6 +48,9 @@
 .duelTable{width:100%; font-size:11px; margin-top:12px}
 .duelTable td{padding:6px; border-bottom:1px solid #1f2937; text-align:left}
 .duelTable.crown{color:#fbbf24}
+.difficulty{font-size:10px; color:#f59e0b; margin-top:4px}
+.dailyReward{font-size:28px; margin:10px 0; animation:bounce 0.6s ease}
+@keyframes bounce{0%,100%{transform:scale(1)} 50%{transform:scale(1.2)}}
 </style>
 <script src='//libtl.com/sdk.js' data-zone='11148292' data-sdk='show_11148292'></script>
 </head>
@@ -75,7 +78,7 @@
 
   <div class="footer">
     <button class="primary" id="btnShuffle">🔄 Shuffle <span id="shuffleCount">(10)</span></button>
-    <button id="btnDuel">⚔️ Duel</button>
+    <button id="btnDuel">⚔️ Duel <span id="duelDiff" class="difficulty"></span></button>
   </div>
 
   <div class="bottomNav">
@@ -100,7 +103,16 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- POST-ROUND 4 BUTTON REPORT -->
+<!-- DAILY LOGIN REWARD MODAL -->
+<div id="dailyModal" class="modal">
+  <div class="card">
+    <h2>🎁 Daily Bonus!</h2>
+    <div class="dailyReward">+50 🏆</div>
+    <p>Come back tomorrow for more rewards!</p>
+    <button class="primary" onclick="closeModal('dailyModal')" style="width:100%">Claim & Play</button>
+  </div>
+</div>
+
 <div id="endModal" class="modal">
   <div class="card">
     <h2 id="endTitle">Round Complete!</h2>
@@ -109,8 +121,8 @@
     <div style="font-size:12px; color:#9aa3b2" id="endTime">Time: 1:23</div>
     <div class="action-grid">
       <button class="primary" onclick="watchAdForDouble()">📺 Double Points</button>
-      <button onclick="init(true)">➡️ Next Round</button>
-      <button onclick="init()">🔄 Play Again</button>
+      <button onclick="nextRound()">➡️ Next Round</button>
+      <button onclick="playAgain()">🔄 Play Again</button>
       <button onclick="shareReport()">📤 Challenge Friend</button>
     </div>
   </div>
@@ -123,18 +135,19 @@
     <p>Rank: <span id="profileRank">Bronze</span></p>
     <p>Wins: <span id="profileWins">0</span></p>
     <p style="font-size:10px; color:#666" id="profileId"></p>
-    <button onclick="document.getElementById('profileModal').classList.remove('show')" style="width:100%;margin-top:12px">Close</button>
+    <button onclick="closeModal('profileModal')" style="width:100%;margin-top:12px">Close</button>
   </div>
 </div>
 
 <div id="duelModal" class="modal">
   <div class="card">
-    <h2>⚔️ Ghost Duel History</h2>
+    <h2>⚔️ Ghost Duel</h2>
+    <div id="duelDiffText" class="difficulty"></div>
     <table class="duelTable" id="duelTable">
       <tr><td>Opponent</td><td>Result</td><td>Score</td></tr>
     </table>
     <button onclick="startGhostDuel()" class="primary" style="width:100%;margin-top:12px">Start New Duel</button>
-    <button onclick="document.getElementById('duelModal').classList.remove('show')" style="width:100%;margin-top:8px">Close</button>
+    <button onclick="closeModal('duelModal')" style="width:100%;margin-top:8px">Close</button>
   </div>
 </div>
 
@@ -142,7 +155,7 @@
   <div class="card">
     <h2>🛒 Store - Coming Day 4</h2>
     <div style="font-size:12px; color:#9aa3b2">Disabled during 72h observation</div>
-    <button onclick="closeStore()" style="width:100%; margin-top:12px">Close</button>
+    <button onclick="closeModal('storeModal')" style="width:100%; margin-top:12px">Close</button>
   </div>
 </div>
 
@@ -158,7 +171,7 @@ let grid=[], dragStart=null, lock=false;
 let points=0, shuffles=10, moves=0, timer=null, timeLeft=120;
 let goals={diamond:0, target:20}, level=1;
 
-// TELEGRAM USER
+// USER + STORAGE
 const user = tg.initDataUnsafe.user;
 if(user){
   document.getElementById('userName').textContent = user.first_name;
@@ -170,13 +183,42 @@ if(user){
   }
 }
 
-// LOCAL STORAGE
 let wins = parseInt(localStorage.getItem('rka_wins') || '0');
 let duelHistory = JSON.parse(localStorage.getItem('rka_duels') || '[]');
 document.getElementById('wins').textContent = wins;
 document.getElementById('profileWins').textContent = wins;
+updateDuelDifficulty();
 
-// CORE GAME
+// DAILY LOGIN REWARD SYSTEM
+function checkDailyReward(){
+  const lastLogin = localStorage.getItem('rka_lastLogin');
+  const today = new Date().toDateString();
+
+  if(lastLogin!== today){
+    // First time today - give reward
+    points += 50;
+    localStorage.setItem('rka_lastLogin', today);
+    localStorage.setItem('rka_points', points);
+
+    // Show modal after 1 second so game loads first
+    setTimeout(()=>{
+      document.getElementById('dailyModal').classList.add('show');
+    }, 1000);
+
+    updateHUD();
+  }
+}
+
+// Save points on exit
+window.addEventListener('beforeunload', ()=>{
+  localStorage.setItem('rka_points', points);
+});
+
+// Load saved points
+const savedPoints = parseInt(localStorage.getItem('rka_points') || '0');
+points = savedPoints;
+
+// GAME CORE
 function init(newLevel=false){
   lock=false;
   if(newLevel) level++;
@@ -222,7 +264,6 @@ function render(){
   }
 }
 
-// FIXED SWIPE LOGIC
 function dragStartHandler(e){
   e.preventDefault();
   if(lock) return;
@@ -236,23 +277,17 @@ function dragStartHandler(e){
 function dragEndHandler(e){
   e.preventDefault();
   if(!dragStart) return;
-
   const x = e.changedTouches? e.changedTouches[0].clientX : e.clientX;
   const y = e.changedTouches? e.changedTouches[0].clientY : e.clientY;
   const dx = x - dragStart.x;
   const dy = y - dragStart.y;
-
-  // 20px threshold
   if(Math.abs(dx) < 20 && Math.abs(dy) < 20){ dragStart = null; return; }
-
   let r2 = dragStart.r, c2 = dragStart.c;
   if(Math.abs(dx) > Math.abs(dy)){
-    c2 += (dx > 0)? 1 : -1; // Right or Left
+    c2 += (dx > 0)? 1 : -1;
   } else {
-    r2 += (dy > 0)? 1 : -1; // Down or Up
+    r2 += (dy > 0)? 1 : -1;
   }
-
-  // Validate bounds and swap
   if(r2 >= 0 && r2 < SIZE && c2 >= 0 && c2 < SIZE){
     trySwap(dragStart.r, dragStart.c, r2, c2);
   }
@@ -291,6 +326,7 @@ async function resolve(matches){
   while(matches.length>0){
     const pts=matches.length*10*combo;
     points+=pts;
+    localStorage.setItem('rka_points', points); // Save progress
     addPop(pts);
     document.getElementById('sndMatch').play().catch(()=>{});
 
@@ -383,7 +419,109 @@ function endRound(win){
   document.getElementById('endModal').classList.add('show');
 }
 
-// SAFE ADS
+// DYNAMIC SHARE BRAG
+function shareReport(){
+  closeModal('endModal');
+  const rank = getRank(points);
+  const text = `I just hit ${points} points in Rael Kertia Arena! I'm ranked ${rank}. Can you do better? 🚀`;
+  tg.switchInlineQuery(text, ['users', 'groups', 'channels']);
+}
+
+// GHOST DUEL PROGRESSION
+function getDuelDifficulty(){
+  const tier = Math.floor(wins / 5);
+  if(tier >= 4) return {name:'Boss', multiplier:3.0};
+  if(tier >= 3) return {name:'Expert', multiplier:2.5};
+  if(tier >= 2) return {name:'Hard', multiplier:2.0};
+  if(tier >= 1) return {name:'Medium', multiplier:1.5};
+  return {name:'Easy', multiplier:1.0};
+}
+
+function updateDuelDifficulty(){
+  const diff = getDuelDifficulty();
+  document.getElementById('duelDiff').textContent = `(${diff.name})`;
+  document.getElementById('duelDiffText').textContent = `Difficulty: ${diff.name}`;
+}
+
+function startGhostDuel(){
+  const diff = getDuelDifficulty();
+  const baseScore = Math.floor(Math.random()*1500)+500;
+  const opponentScore = Math.floor(baseScore * diff.multiplier);
+
+  const opponentNames = ['ShadowFox','IceWolf','ThunderCat','BlazeEagle','NightOwl','VoidSerpent','StormRaven','IronTiger'];
+  const opponent = opponentNames[Math.floor(Math.random()*opponentNames.length)];
+
+  const win = points > opponentScore;
+
+  if(win){
+    wins++;
+    localStorage.setItem('rka_wins', wins);
+    document.getElementById('wins').textContent = wins;
+    document.getElementById('profileWins').textContent = wins;
+    updateDuelDifficulty();
+  }
+
+  duelHistory.unshift({
+    opponent: opponent,
+    status: win? 'Win' : 'Lose',
+    score: points,
+    oppScore: opponentScore,
+    crown: win,
+    diff: diff.name,
+    date: new Date().toLocaleDateString()
+  });
+
+  if(duelHistory.length > 20) duelHistory = duelHistory.slice(0, 20);
+  localStorage.setItem('rka_duels', JSON.stringify(duelHistory));
+
+  renderDuelTable();
+  toast(win? `You won vs ${diff.name}! 👑` : `Lost to ${diff.name}. Train more!`);
+  document.getElementById('duelModal').classList.add('show');
+}
+
+function renderDuelTable(){
+  const table = document.getElementById('duelTable');
+  table.innerHTML = '<tr><td>Opponent</td><td>Result</td><td>Score</td></tr>';
+  if(duelHistory.length === 0){
+    table.innerHTML += '<tr><td colspan="3" style="text-align:center;color:#666">No duels yet</td></tr>';
+    return;
+  }
+  duelHistory.forEach(d=>{
+    table.innerHTML += `
+      <tr>
+        <td>${d.opponent} <span style="color:#f59e0b;font-size:9px">${d.diff||'Easy'}</span></td>
+        <td class="${d.crown? 'crown' : ''}">${d.status}</td>
+        <td>${d.score} vs ${d.oppScore}</td>
+      </tr>
+    `;
+  });
+}
+
+// BUTTONS
+function nextRound(){
+  closeModal('endModal');
+  setTimeout(()=>init(true), 100);
+}
+
+function playAgain(){
+  closeModal('endModal');
+  setTimeout(()=>init(false), 100);
+}
+
+async function watchAdForDouble(){
+  try{
+    await safeShowAd();
+    points*=2;
+    localStorage.setItem('rka_points', points);
+    document.getElementById('endPoints').textContent=points;
+    toast('Points doubled! x2');
+    closeModal('endModal');
+    setTimeout(()=>init(true), 300);
+  } catch(e){
+    toast('Ad failed');
+  }
+}
+
 async function safeShowAd(){
   if(typeof show_11148292 === 'function'){
     console.log('Ad started');
@@ -420,81 +558,10 @@ function shuffleBoard(){
   render();
 }
 
-async function watchAdForDouble(){
-  try{
-    await safeShowAd();
-    points*=2;
-    document.getElementById('endPoints').textContent=points;
-    toast('Points doubled! x2');
-  } catch(e){
-    toast('Ad failed');
-  }
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
 }
 
-// 4-BUTTON SHARE REPORT
-function shareReport(){
-  const text = `I scored ${points} points in Level ${level} on Rael Kertia Arena! Beat my score 👊`;
-  tg.switchInlineQuery(text, ['users', 'groups', 'channels']);
-}
-
-// GHOST DUEL SYSTEM
-const ghostOpponents = [
-  {name:'ShadowFox', score:Math.floor(Math.random()*2000)+500},
-  {name:'IceWolf', score:Math.floor(Math.random()*2000)+500},
-  {name:'ThunderCat', score:Math.floor(Math.random()*2000)+500},
-  {name:'BlazeEagle', score:Math.floor(Math.random()*2000)+500},
-  {name:'NightOwl', score:Math.floor(Math.random()*2000)+500}
-];
-
-function startGhostDuel(){
-  const opponent = ghostOpponents[Math.floor(Math.random()*ghostOpponents.length)];
-  const win = points > opponent.score;
-
-  if(win){
-    wins++;
-    localStorage.setItem('rka_wins', wins);
-    document.getElementById('wins').textContent = wins;
-    document.getElementById('profileWins').textContent = wins;
-  }
-
-  duelHistory.unshift({
-    opponent: opponent.name,
-    status: win? 'Win' : 'Lose',
-    score: points,
-    oppScore: opponent.score,
-    crown: win,
-    date: new Date().toLocaleDateString()
-  });
-
-  if(duelHistory.length > 20) duelHistory = duelHistory.slice(0, 20);
-  localStorage.setItem('rka_duels', JSON.stringify(duelHistory));
-
-  renderDuelTable();
-  toast(win? 'You won the duel! 👑' : 'You lost. Try again!');
-  document.getElementById('duelModal').classList.add('show');
-}
-
-function renderDuelTable(){
-  const table = document.getElementById('duelTable');
-  table.innerHTML = '<tr><td>Opponent</td><td>Result</td><td>Score</td></tr>';
-
-  if(duelHistory.length === 0){
-    table.innerHTML += '<tr><td colspan="3" style="text-align:center;color:#666">No duels yet</td></tr>';
-    return;
-  }
-
-  duelHistory.forEach(d=>{
-    table.innerHTML += `
-      <tr>
-        <td>${d.opponent}</td>
-        <td class="${d.crown? 'crown' : ''}">${d.status}</td>
-        <td>${d.score} vs ${d.oppScore}</td>
-      </tr>
-    `;
-  });
-}
-
-// UI
 function openProfile(){
   document.getElementById('profileModal').classList.add('show');
 }
@@ -511,14 +578,9 @@ function showTab(tab){
   } else if(tab==='store'){
     document.getElementById('storeModal').classList.add('show');
   } else {
-    document.getElementById('storeModal').classList.remove('show');
-    document.getElementById('duelModal').classList.remove('show');
+    closeModal('storeModal');
+    closeModal('duelModal');
   }
-}
-
-function closeStore(){
-  document.getElementById('storeModal').classList.remove('show');
-  document.querySelectorAll('.navBtn')[0].classList.add('active');
 }
 
 document.getElementById('btnDuel').onclick=()=>showTab('duel');
@@ -526,7 +588,9 @@ document.getElementById('btnDuel').onclick=()=>showTab('duel');
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
+// INIT + DAILY REWARD CHECK
 init();
+checkDailyReward();
 </script>
 </body>
 </html>
