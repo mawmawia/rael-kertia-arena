@@ -1,117 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Rael Kertia Arena</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Rael Kertia Arena - No DB</title>
 <style>
-body{margin:0;background:#0a0f1e;color:#e5e7eb;font-family:system-ui;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-header{padding:12px;background:#0b1222;border-bottom:1px solid #1f2937;text-align:center}
-.board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;width:90vw;height:90vw;max-width:420px;max-height:420px;margin:auto;background:#0b1222;padding:8px;border-radius:12px;border:1px solid #1f2937}
-.tile{border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;background:#1a2333;border:1px solid #2d3748;cursor:pointer;aspect-ratio:1}
-.suit-d{background:#fff;color:#000}
-.suit-s{background:#3b82f6;color:#fff}
-.suit-h{background:#ef4444;color:#fff}
-.suit-c{background:#22c55e;color:#fff}
-.hud{display:flex;justify-content:space-around;padding:10px;background:#0b1222;border-top:1px solid #1f2937;font-size:14px}
-button{padding:10px 20px;background:#16a34a;border:none;border-radius:8px;color:#fff;font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e27;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;min-height:100vh}
+h1{margin-bottom:10px;font-size:20px}
+#board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#1a1f3a;padding:12px;border-radius:14px;margin:15px 0}
+.cell{width:42px;height:42px;background:#2a2f4a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:0.2s}
+.cell.selected{background:#4a5fc1;transform:scale(1.1)}
+.cell.hint{background:#3a7a4a}
+#info{margin-top:15px;text-align:center}
+#coins{font-size:18px;color:#ffd700;margin-bottom:8px}
+button{background:#4a5fc1;border:none;color:#fff;padding:10px 20px;border-radius:8px;margin:5px;cursor:pointer}
 </style>
 </head>
 <body>
-<header>
-<div>User: <span id="userName">Guest</span></div>
-<div>Level: <span id="level">1</span> | Score: <span id="score">0</span> | Coins: <span id="coins">100</span></div>
-</header>
-
-<div class="board" id="board"></div>
-
-<div class="hud">
-<button onclick="shuffle()">🔄 Shuffle</button>
-<button onclick="reset()">🔁 Reset</button>
+<h1>Rael Kertia Arena</h1>
+<div id="coins">Coins: <span id="coinCount">100</span></div>
+<div id="board"></div>
+<div id="info">
+  <button onclick="resetGame()">Reset Board</button>
+  <div id="status">Tap a piece to move</div>
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const SIZE = 8;
-const SUITS = ['♦️','♠️','♣️','♥️'];
-const COLORS = ['suit-d','suit-s','suit-c','suit-h'];
-let grid = [];
-let score = 0;
-let level = 1;
+let board = Array(64).fill('');
+let selected = null;
 let coins = 100;
 
-// LOAD FROM LOCALSTORAGE
-const userId = tg.initDataUnsafe.user?.id || 'guest';
-document.getElementById('userName').textContent = tg.initDataUnsafe.user?.first_name || 'Guest';
-score = parseInt(localStorage.getItem('score_' + userId) || '0');
-coins = parseInt(localStorage.getItem('coins_' + userId) || '100');
-level = parseInt(localStorage.getItem('level_' + userId) || '1');
+// Setup: pawns + 2 knights
+for(let i=8; i<16; i++) board[i] = '♙';
+board[1] = '♞'; board[6] = '♞';
 
-function save() {
-localStorage.setItem('score_' + userId, score);
-localStorage.setItem('coins_' + userId, coins);
-localStorage.setItem('level_' + userId, level);
-updateUI();
+function render(){
+  const b = document.getElementById('board');
+  b.innerHTML = '';
+  board.forEach((p,i)=>{
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if(i===selected) cell.classList.add('selected');
+    cell.textContent = p;
+    cell.onclick = ()=>clickCell(i);
+    b.appendChild(cell);
+  });
 }
 
-function updateUI() {
-document.getElementById('score').textContent = score;
-document.getElementById('coins').textContent = coins;
-document.getElementById('level').textContent = level;
+function clickCell(i){
+  if(selected===null && board[i]){
+    selected = i;
+    document.getElementById('status').textContent = 'Selected. Tap empty cell to move';
+  } else if(selected!==null){
+    if(board[i]===''){
+      board[i] = board[selected];
+      board[selected] = '';
+      coins += 1; // reward for move
+      document.getElementById('coinCount').textContent = coins;
+      document.getElementById('status').textContent = 'Moved! +1 coin';
+    }
+    selected = null;
+  }
+  render();
 }
 
-function init() {
-grid = [];
-for(let r=0;r<SIZE;r++) {
-grid[r] = [];
-for(let c=0;c<SIZE;c++) {
-grid[r][c] = Math.floor(Math.random()*4);
+function resetGame(){
+  board = Array(64).fill('');
+  for(let i=8; i<16; i++) board[i] = '♙';
+  board[1] = '♞'; board[6] = '♞';
+  coins = 100;
+  document.getElementById('coinCount').textContent = coins;
+  document.getElementById('status').textContent = 'Board reset';
+  selected = null;
+  render();
 }
+
 render();
-}
-
-function render() {
-const board = document.getElementById('board');
-board.innerHTML = '';
-for(let r=0;r<SIZE;r++) {
-for(let c=0;c<SIZE;c++) {
-const tile = document.createElement('div');
-tile.className = 'tile ' + COLORS[grid[r][c]];
-tile.textContent = SUITS[grid[r][c]];
-tile.onclick = () => clickTile(r,c);
-board.appendChild(tile);
-}
-}
-}
-
-function clickTile(r,c) {
-score += 10;
-coins += 1;
-if(score > 1000) level = Math.floor(score/1000) + 1;
-save();
-grid[r][c] = Math.floor(Math.random()*4);
-render();
-}
-
-function shuffle() {
-for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)grid[r][c]=Math.floor(Math.random()*4);
-render();
-}
-
-function reset() {
-score = 0;
-level = 1;
-coins = 100;
-save();
-init();
-}
-
-// START
-updateUI();
-init();
 </script>
 </body>
 </html>
