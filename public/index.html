@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Rael Kertia Arena - No DB</title>
+<title>Rael Kertia Arena - With Supabase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0e27;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;min-height:100vh}
@@ -11,29 +12,56 @@ h1{margin-bottom:10px;font-size:20px}
 #board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#1a1f3a;padding:12px;border-radius:14px;margin:15px 0}
 .cell{width:42px;height:42px;background:#2a2f4a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:0.2s}
 .cell.selected{background:#4a5fc1;transform:scale(1.1)}
-.cell.hint{background:#3a7a4a}
 #info{margin-top:15px;text-align:center}
 #coins{font-size:18px;color:#ffd700;margin-bottom:8px}
 button{background:#4a5fc1;border:none;color:#fff;padding:10px 20px;border-radius:8px;margin:5px;cursor:pointer}
+#loading{color:#888}
 </style>
 </head>
 <body>
 <h1>Rael Kertia Arena</h1>
-<div id="coins">Coins: <span id="coinCount">100</span></div>
+<div id="loading">Loading player data...</div>
+<div id="coins" style="display:none">Coins: <span id="coinCount">0</span></div>
 <div id="board"></div>
-<div id="info">
-  <button onclick="resetGame()">Reset Board</button>
+<div id="info" style="display:none">
+  <button onclick="saveGame()">Save Game</button>
+  <button onclick="resetGame()">Reset</button>
   <div id="status">Tap a piece to move</div>
 </div>
 
 <script>
+// ===== CONFIG - REPLACE THESE =====
+const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// ===================================
+
 let board = Array(64).fill('');
 let selected = null;
-let coins = 100;
+let coins = 0;
+let userId = 'guest_' + Math.random().toString(36).substr(2,9);
 
-// Setup: pawns + 2 knights
+// Setup board
 for(let i=8; i<16; i++) board[i] = '♙';
 board[1] = '♞'; board[6] = '♞';
+
+async function loadGame(){
+  const {data} = await supabase.from('players').select('*').eq('user_id', userId).single();
+  if(data){
+    coins = data.coins;
+    board = data.board_state || board;
+  }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('coins').style.display = 'block';
+  document.getElementById('info').style.display = 'block';
+  document.getElementById('coinCount').textContent = coins;
+  render();
+}
+
+async function saveGame(){
+  await supabase.from('players').upsert({user_id: userId, coins, board_state: board});
+  document.getElementById('status').textContent = 'Saved to Supabase ✅';
+}
 
 function render(){
   const b = document.getElementById('board');
@@ -51,14 +79,12 @@ function render(){
 function clickCell(i){
   if(selected===null && board[i]){
     selected = i;
-    document.getElementById('status').textContent = 'Selected. Tap empty cell to move';
   } else if(selected!==null){
     if(board[i]===''){
       board[i] = board[selected];
       board[selected] = '';
-      coins += 1; // reward for move
+      coins += 1;
       document.getElementById('coinCount').textContent = coins;
-      document.getElementById('status').textContent = 'Moved! +1 coin';
     }
     selected = null;
   }
@@ -70,13 +96,10 @@ function resetGame(){
   for(let i=8; i<16; i++) board[i] = '♙';
   board[1] = '♞'; board[6] = '♞';
   coins = 100;
-  document.getElementById('coinCount').textContent = coins;
-  document.getElementById('status').textContent = 'Board reset';
-  selected = null;
   render();
 }
 
-render();
+loadGame();
 </script>
 </body>
 </html>
